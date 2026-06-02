@@ -148,3 +148,19 @@
     </div>
 </div>
 @endsection
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.querySelectorAll('select')[1];
+    const universitySelect = document.querySelectorAll('select')[0];
+
+    function filterMembers() {
+        // For demo purposes, we can log the selected values
+        console.log('Selected Category:', categorySelect.value);
+        console.log('Selected University:', universitySelect.value);
+    }
+
+    categorySelect.addEventListener('change', filterMembers);
+    universitySelect.addEventListener('change', filterMembers);
+});
+</script>

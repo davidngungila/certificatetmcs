@@ -19,16 +19,25 @@
                 <div class="section-title">Upload File</div>
             </div>
         </div>
-        <div class="upload-zone">
-            <div class="upload-icon">📊</div>
-            <div class="upload-title">Drop Excel file here</div>
-            <div class="upload-sub">Supports .xlsx · Max 10MB · 500 records max</div>
-            <button class="btn btn-primary" style="margin-top:12px">Choose File</button>
-        </div>
-        <div style="margin-top:16px;font-size:12.5px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
-            <span>📥</span>
-            <a href="#" style="color:var(--accent);font-weight:700;text-decoration:none">Download import template (.xlsx)</a>
-        </div>
+        <form id="uploadForm" enctype="multipart/form-data" method="POST">
+            @csrf
+            <div class="upload-zone" id="dropZone" style="cursor: pointer;">
+                <div class="upload-icon">📊</div>
+                <div class="upload-title">Drop Excel file here</div>
+                <div class="upload-sub">Supports .xlsx · Max 10MB · 500 records max</div>
+                <input type="file" id="excelFile" name="excel_file" accept=".xlsx,.xls" style="display: none;">
+                <button type="button" class="btn btn-primary" style="margin-top:12px" onclick="document.getElementById('excelFile').click()">Choose File</button>
+            </div>
+            <div id="fileName" style="margin-top: 12px; font-weight: 700; color: var(--navy); display: none;"></div>
+            <div style="margin-top:16px;font-size:12.5px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+                <span>📥</span>
+                <a href="#" style="color:var(--accent);font-weight:700;text-decoration:none">Download import template (.xlsx)</a>
+            </div>
+            <div style="margin-top: 16px; display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary">Upload & Generate Certs</button>
+                <button type="button" class="btn btn-secondary" onclick="showBulkProgress()">Start Demo Import</button>
+            </div>
+        </form>
     </div>
     <div class="glass-card" style="padding:20px">
         <div class="section-header">
@@ -83,6 +92,38 @@
     </div>
 </div>
 <script>
+// Drag & Drop functionality
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('excelFile');
+const fileNameDisplay = document.getElementById('fileName');
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = 'var(--accent)';
+    dropZone.style.backgroundColor = 'rgba(37,99,235,0.05)';
+});
+dropZone.addEventListener('dragleave', () => {
+    dropZone.style.borderColor = 'var(--gray-300)';
+    dropZone.style.backgroundColor = 'var(--gray-50)';
+});
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = 'var(--gray-300)';
+    dropZone.style.backgroundColor = 'var(--gray-50)';
+    if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        updateFileNameDisplay(e.dataTransfer.files[0]);
+    }
+});
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) {
+        updateFileNameDisplay(fileInput.files[0]);
+    }
+});
+function updateFileNameDisplay(file) {
+    fileNameDisplay.textContent = '📄 ' + file.name;
+    fileNameDisplay.style.display = 'block';
+}
 function showBulkProgress(){
     document.getElementById('bulkProgressArea').style.display = 'block';
     let progress = 0;

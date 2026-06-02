@@ -19,7 +19,7 @@ class CertificateController extends Controller
             'name' => $validated['name'],
             'type' => $validated['type'],
             'date' => $validated['date'],
-        ]);
+        ])->setPaper('a4', 'landscape');
 
         return $pdf->download('certificate-' . strtolower(str_replace(' ', '-', $validated['name'])) . '.pdf');
     }
