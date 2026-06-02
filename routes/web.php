@@ -26,6 +26,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/templates', function () {
         return view('templates.index');
     })->name('templates.index');
+    Route::get('/templates/designer', function () {
+        return view('templates.designer');
+    })->name('templates.designer');
 
     Route::get('/signatures', function () {
         return view('signatures.index');

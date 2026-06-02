@@ -11,7 +11,10 @@
         <div class="section-title">Certificate Templates</div>
         <div class="section-subtitle">Manage PDF templates for all certificate types</div>
     </div>
-    <button class="btn btn-primary" onclick="openModal('addTemplateModal')">➕ Add Template</button>
+    <div style="display:flex;gap:8px">
+        <a href="{{ route('templates.designer') }}" class="btn btn-primary">🎨 Open Designer</a>
+        <button class="btn btn-secondary" onclick="openModal('addTemplateModal')">➕ Add Template</button>
+    </div>
 </div>
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
     <!-- Template 1 -->
