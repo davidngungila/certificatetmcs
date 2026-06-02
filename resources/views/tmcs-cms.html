@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TMCS — Certificate Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0a1628;
+    --navy-mid: #0e2040;
+    --navy-light: #1a3260;
+    --navy-soft: #1e3a6e;
+    --accent: #2563eb;
+    --accent-bright: #3b82f6;
+    --accent-glow: #60a5fa;
+    --gold: #f59e0b;
+    --gold-light: #fcd34d;
+    --emerald: #10b981;
+    --rose: #f43f5e;
+    --violet: #8b5cf6;
+    --white: #ffffff;
+    --off-white: #f8fafc;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --text-primary: #0a1628;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --glass-bg: rgba(255,255,255,0.72);
+    --glass-border: rgba(10,22,40,0.08);
+    --glass-shadow: 0 8px 32px rgba(10,22,40,0.10);
+    --glass-heavy: rgba(255,255,255,0.85);
+    --sidebar-w: 260px;
+    --header-h: 64px;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+    --transition: 0.22s cubic-bezier(.4,0,.2,1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Manrope', sans-serif;
+    background: #ffffff;
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Subtle background pattern ─── */
+  body::before {
+    content:'';
+    position:fixed;inset:0;
+    background:
+      radial-gradient(ellipse 900px 600px at 0% 0%, rgba(37,99,235,0.04) 0%, transparent 70%),
+      radial-gradient(ellipse 700px 500px at 100% 100%, rgba(10,22,40,0.04) 0%, transparent 70%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(10,22,40,0.018) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(10,22,40,0.018) 40px);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  /* ─── Layout ─── */
+  .app { display:flex; min-height:100vh; position:relative; z-index:1; }
+
+  /* ─── Sidebar ─── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--navy);
+    position: fixed;
+    top:0; left:0; bottom:0;
+    display:flex; flex-direction:column;
+    z-index: 100;
+    transition: transform var(--transition), width var(--transition);
+    box-shadow: 4px 0 40px rgba(10,22,40,0.18);
+  }
+  .sidebar-header {
+    padding: 22px 20px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display:flex; align-items:center; gap:12px;
+    min-height: var(--header-h);
+  }
+  .sidebar-logo {
+    width:40px;height:40px;border-radius:12px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--navy-light) 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:900;color:#fff;font-size:15px;letter-spacing:-0.5px;
+    flex-shrink:0;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.4);
+  }
+  .sidebar-brand { color:#fff; }
+  .sidebar-brand strong { display:block; font-size:14px; font-weight:800; letter-spacing:0.3px; }
+  .sidebar-brand span { font-size:10.5px; color:rgba(255,255,255,0.45); font-weight:500; letter-spacing:0.8px; text-transform:uppercase; }
+
+  .sidebar-nav { flex:1; overflow-y:auto; padding:12px 10px; scrollbar-width:none; }
+  .sidebar-nav::-webkit-scrollbar { display:none; }
+
+  .nav-section { margin-bottom:6px; }
+  .nav-section-label {
+    font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+    color:rgba(255,255,255,0.3); padding:14px 12px 6px;
+  }
+
+  .nav-item {
+    display:flex; align-items:center; gap:11px;
+    padding:10px 12px; border-radius:10px;
+    cursor:pointer; transition:all var(--transition);
+    color:rgba(255,255,255,0.55);
+    font-size:13.5px; font-weight:500;
+    position:relative; margin-bottom:2px;
+    user-select:none;
+  }
+  .nav-item:hover { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.85); }
+  .nav-item.active {
+    background: linear-gradient(135deg, rgba(37,99,235,0.22) 0%, rgba(37,99,235,0.08) 100%);
+    color:#fff;
+    box-shadow: 0 0 0 1px rgba(37,99,235,0.25) inset;
+  }
+  .nav-item.active::before {
+    content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+    width:3px; height:70%; background:var(--accent-bright); border-radius:0 3px 3px 0;
+  }
+  .nav-icon { width:18px;height:18px; flex-shrink:0; opacity:0.9; }
+  .nav-badge {
+    margin-left:auto; background:var(--accent);
+    color:#fff; font-size:10px; font-weight:700;
+    padding:2px 7px; border-radius:20px; min-width:20px; text-align:center;
+  }
+  .nav-badge.gold { background: var(--gold); color:var(--navy); }
+
+  .sidebar-footer {
+    padding:12px 10px;
+    border-top:1px solid rgba(255,255,255,0.07);
+  }
+  .sidebar-user {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border-radius:10px;
+    background:rgba(255,255,255,0.05); cursor:pointer;
+    transition:background var(--transition);
+  }
+  .sidebar-user:hover { background:rgba(255,255,255,0.09); }
+  .user-avatar {
+    width:34px;height:34px;border-radius:10px;
+    background: linear-gradient(135deg,#2563eb,#7c3aed);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;color:#fff;font-size:13px;flex-shrink:0;
+  }
+  .user-info strong { display:block;font-size:12.5px;color:#fff;font-weight:700; }
+  .user-info span { font-size:11px;color:rgba(255,255,255,0.4);font-weight:500; }
+
+  /* ─── Main ─── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex:1; display:flex; flex-direction:column;
+    min-height:100vh;
+    transition: margin-left var(--transition);
+  }
+
+  /* ─── Header ─── */
+  .header {
+    height: var(--header-h);
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--glass-border);
+    display:flex; align-items:center;
+    padding:0 28px;
+    position:sticky; top:0; z-index:50;
+    gap:16px;
+    box-shadow: 0 1px 20px rgba(10,22,40,0.06);
+  }
+  .header-hamburger {
+    display:none; background:none; border:none; cursor:pointer;
+    padding:8px; border-radius:8px; transition:background var(--transition);
+    color:var(--navy);
+  }
+  .header-hamburger:hover { background:var(--gray-100); }
+  .page-title {
+    font-size:18px; font-weight:800; color:var(--navy);
+    letter-spacing:-0.3px; flex:1;
+  }
+  .page-subtitle { font-size:12px; color:var(--text-muted); font-weight:500; margin-top:1px; }
+  .header-actions { display:flex; align-items:center; gap:10px; }
+  .header-search {
+    display:flex; align-items:center; gap:8px;
+    background:var(--gray-100); border-radius:10px;
+    padding:8px 14px; border:1px solid transparent;
+    transition:all var(--transition); cursor:text;
+  }
+  .header-search:hover { border-color:var(--gray-200); background:#fff; }
+  .header-search input {
+    border:none; background:none; outline:none;
+    font-family:inherit; font-size:13px; color:var(--text-primary);
+    width:180px;
+  }
+  .header-search input::placeholder { color:var(--gray-400); }
+  .header-btn {
+    width:38px;height:38px; border-radius:10px;
+    background:var(--gray-100); border:1px solid var(--gray-200);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer; transition:all var(--transition); color:var(--navy);
+    position:relative;
+  }
+  .header-btn:hover { background:var(--navy); color:#fff; border-color:var(--navy); }
+  .notif-dot {
+    position:absolute; top:8px; right:8px;
+    width:7px;height:7px; background:var(--rose); border-radius:50%;
+    border:2px solid #fff;
+  }
+
+  /* ─── Content ─── */
+  .content { flex:1; padding:28px; overflow-y:auto; }
+
+  /* ─── Page Views ─── */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* ─── Stats Grid ─── */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+  @media(max-width:1100px){ .stats-grid { grid-template-columns:repeat(2,1fr); } }
+
+  .stat-card {
+    background: var(--glass-heavy);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 22px 22px 18px;
+    box-shadow: var(--glass-shadow);
+    position:relative; overflow:hidden;
+    transition: transform var(--transition), box-shadow var(--transition);
+    cursor:default;
+  }
+  .stat-card:hover { transform:translateY(-2px); box-shadow:0 16px 40px rgba(10,22,40,0.13); }
+  .stat-card::before {
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background: var(--card-accent, linear-gradient(90deg, var(--accent), var(--accent-glow)));
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .stat-icon {
+    width:44px;height:44px;border-radius:12px;
+    background:var(--icon-bg, rgba(37,99,235,0.08));
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:14px;
+  }
+  .stat-icon svg { width:22px;height:22px; }
+  .stat-value { font-size:28px; font-weight:900; color:var(--navy); letter-spacing:-1px; line-height:1; }
+  .stat-label { font-size:12.5px; color:var(--text-muted); font-weight:600; margin-top:6px; text-transform:uppercase; letter-spacing:0.5px; }
+  .stat-change {
+    display:inline-flex;align-items:center;gap:4px;
+    font-size:11.5px; font-weight:700; margin-top:8px;
+    padding:3px 8px; border-radius:20px;
+  }
+  .stat-change.up { background:rgba(16,185,129,0.1); color:var(--emerald); }
+  .stat-change.down { background:rgba(244,63,94,0.1); color:var(--rose); }
+
+  /* ─── Section heading ─── */
+  .section-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:16px;
+  }
+  .section-title { font-size:16px; font-weight:800; color:var(--navy); letter-spacing:-0.2px; }
+  .section-subtitle { font-size:12px; color:var(--text-muted); font-weight:500; margin-top:2px; }
+
+  /* ─── Buttons ─── */
+  .btn {
+    display:inline-flex; align-items:center; gap:7px;
+    padding:9px 18px; border-radius:9px; font-family:inherit;
+    font-size:13px; font-weight:700; cursor:pointer;
+    border:none; transition:all var(--transition); white-space:nowrap;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--navy-light) 100%);
+    color:#fff;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.28);
+  }
+  .btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(37,99,235,0.38); }
+  .btn-secondary {
+    background:var(--gray-100); color:var(--navy);
+    border:1px solid var(--gray-200);
+  }
+  .btn-secondary:hover { background:var(--navy); color:#fff; border-color:var(--navy); }
+  .btn-ghost { background:transparent; color:var(--text-muted); padding:8px 12px; }
+  .btn-ghost:hover { background:var(--gray-100); color:var(--navy); }
+  .btn-danger { background:rgba(244,63,94,0.08); color:var(--rose); border:1px solid rgba(244,63,94,0.2); }
+  .btn-danger:hover { background:var(--rose); color:#fff; }
+  .btn-sm { padding:6px 13px; font-size:12px; border-radius:7px; }
+  .btn-icon { padding:8px; width:36px;height:36px; justify-content:center; border-radius:8px; }
+
+  /* ─── Glass Card ─── */
+  .glass-card {
+    background: var(--glass-heavy);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius);
+    box-shadow: var(--glass-shadow);
+  }
+
+  /* ─── Table ─── */
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; }
+  thead th {
+    font-size:11.5px; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.7px; color:var(--text-muted);
+    padding:12px 16px; text-align:left;
+    border-bottom:1px solid var(--gray-100);
+    background:var(--gray-50);
+    white-space:nowrap;
+  }
+  thead th:first-child { border-radius:var(--radius-sm) 0 0 0; }
+  thead th:last-child { border-radius:0 var(--radius-sm) 0 0; }
+  tbody tr { transition:background var(--transition); cursor:default; }
+  tbody tr:hover { background:rgba(37,99,235,0.03); }
+  tbody td {
+    padding:13px 16px; font-size:13.5px; color:var(--text-secondary);
+    border-bottom:1px solid var(--gray-100); vertical-align:middle;
+  }
+  tbody tr:last-child td { border-bottom:none; }
+
+  /* ─── Badges ─── */
+  .badge {
+    display:inline-flex;align-items:center;gap:5px;
+    padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:700;
+    white-space:nowrap;
+  }
+  .badge-dot { width:6px;height:6px;border-radius:50%; }
+  .badge-blue { background:rgba(37,99,235,0.1); color:var(--accent); }
+  .badge-green { background:rgba(16,185,129,0.1); color:var(--emerald); }
+  .badge-gold { background:rgba(245,158,11,0.1); color:var(--gold); }
+  .badge-rose { background:rgba(244,63,94,0.1); color:var(--rose); }
+  .badge-violet { background:rgba(139,92,246,0.1); color:var(--violet); }
+  .badge-gray { background:var(--gray-100); color:var(--gray-500); }
+  .badge-navy { background:rgba(10,22,40,0.08); color:var(--navy); }
+
+  /* ─── Avatar ─── */
+  .avatar {
+    width:34px;height:34px; border-radius:9px;
+    background:linear-gradient(135deg,var(--accent),var(--violet));
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:800;color:#fff;flex-shrink:0;
+  }
+
+  /* ─── Progress bar ─── */
+  .progress { background:var(--gray-100); border-radius:10px; height:6px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:10px; transition:width 1s ease; }
+
+  /* ─── Cert type cards ─── */
+  .cert-types-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; }
+  .cert-type-card {
+    background:var(--glass-heavy);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius);
+    padding:20px; cursor:pointer;
+    transition:all var(--transition);
+    position:relative; overflow:hidden;
+    box-shadow: var(--glass-shadow);
+  }
+  .cert-type-card:hover { transform:translateY(-3px); box-shadow:0 20px 40px rgba(10,22,40,0.12); border-color:var(--accent-bright); }
+  .cert-type-card::after {
+    content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
+    background:var(--ct-color, var(--accent));
+    opacity:0; transition:opacity var(--transition);
+  }
+  .cert-type-card:hover::after { opacity:1; }
+  .ct-icon {
+    width:48px;height:48px;border-radius:14px;
+    background:var(--ct-bg, rgba(37,99,235,0.08));
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:14px; font-size:22px;
+  }
+  .ct-name { font-size:14px; font-weight:800; color:var(--navy); margin-bottom:5px; }
+  .ct-count { font-size:12px; color:var(--text-muted); font-weight:500; }
+  .ct-meta { margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+
+  /* ─── Form ─── */
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .form-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+  @media(max-width:700px){ .form-grid,.form-grid-3 { grid-template-columns:1fr; } }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  .form-group.full { grid-column:1/-1; }
+  label { font-size:12.5px; font-weight:700; color:var(--navy); letter-spacing:0.2px; }
+  input, select, textarea {
+    font-family:inherit; font-size:13.5px; color:var(--text-primary);
+    background:#fff; border:1.5px solid var(--gray-200);
+    border-radius:9px; padding:10px 14px; outline:none;
+    transition:border-color var(--transition), box-shadow var(--transition);
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color:var(--accent-bright);
+    box-shadow:0 0 0 3px rgba(37,99,235,0.12);
+  }
+  textarea { resize:vertical; min-height:90px; }
+  .form-hint { font-size:11.5px; color:var(--text-muted); }
+
+  /* ─── Upload zone ─── */
+  .upload-zone {
+    border:2px dashed var(--gray-300); border-radius:var(--radius);
+    padding:40px 20px; text-align:center; cursor:pointer;
+    transition:all var(--transition); background:var(--gray-50);
+  }
+  .upload-zone:hover { border-color:var(--accent); background:rgba(37,99,235,0.03); }
+  .upload-icon { font-size:36px; margin-bottom:12px; }
+  .upload-title { font-size:14px; font-weight:700; color:var(--navy); margin-bottom:6px; }
+  .upload-sub { font-size:12.5px; color:var(--text-muted); }
+
+  /* ─── Timeline ─── */
+  .timeline { display:flex; flex-direction:column; gap:0; }
+  .timeline-item { display:flex; gap:14px; padding-bottom:20px; position:relative; }
+  .timeline-item:last-child { padding-bottom:0; }
+  .timeline-left { display:flex; flex-direction:column; align-items:center; width:32px; flex-shrink:0; }
+  .timeline-dot {
+    width:32px;height:32px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px; z-index:1; flex-shrink:0;
+  }
+  .timeline-line { flex:1; width:2px; background:var(--gray-100); margin-top:4px; }
+  .timeline-item:last-child .timeline-line { display:none; }
+  .timeline-content { flex:1; padding-top:4px; }
+  .timeline-title { font-size:13.5px; font-weight:700; color:var(--navy); margin-bottom:3px; }
+  .timeline-desc { font-size:12.5px; color:var(--text-muted); line-height:1.5; }
+  .timeline-time { font-size:11px; color:var(--text-muted); margin-top:4px; }
+
+  /* ─── Charts ─── */
+  .chart-bar-wrap { display:flex; flex-direction:column; gap:12px; }
+  .chart-bar-item { display:flex; flex-direction:column; gap:5px; }
+  .chart-bar-header { display:flex; justify-content:space-between; align-items:center; }
+  .chart-bar-label { font-size:12.5px; font-weight:600; color:var(--text-secondary); }
+  .chart-bar-value { font-size:12.5px; font-weight:800; color:var(--navy); }
+
+  /* ─── Verification ─── */
+  .verify-card {
+    max-width:480px; margin:0 auto;
+    background:var(--glass-heavy);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius);
+    padding:36px;
+    box-shadow: 0 20px 60px rgba(10,22,40,0.1);
+  }
+  .verify-result {
+    background:var(--glass-heavy);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius);
+    padding:24px; margin-top:20px;
+    display:none;
+  }
+  .verify-result.show { display:block; }
+  .verify-status {
+    display:flex;align-items:center;gap:10px;
+    padding:14px 18px; border-radius:10px;
+    margin-bottom:16px;
+  }
+  .verify-status.valid { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); }
+  .verify-status.invalid { background:rgba(244,63,94,0.08); border:1px solid rgba(244,63,94,0.2); }
+  .verify-status-icon { font-size:24px; }
+  .verify-status-text strong { display:block; font-size:15px; font-weight:800; }
+  .verify-fields { display:flex; flex-direction:column; gap:10px; }
+  .verify-field { display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--gray-100); }
+  .verify-field:last-child { border-bottom:none; }
+  .verify-field-label { font-size:12px; font-weight:700; color:var(--text-muted); width:140px; flex-shrink:0; text-transform:uppercase; letter-spacing:0.5px; }
+  .verify-field-value { font-size:13.5px; font-weight:600; color:var(--navy); }
+
+  /* ─── Settings ─── */
+  .settings-section { margin-bottom:28px; }
+  .settings-title { font-size:14px; font-weight:800; color:var(--navy); margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--gray-100); }
+  .settings-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 0; border-bottom:1px solid var(--gray-50);
+  }
+  .settings-row:last-child { border-bottom:none; }
+  .settings-row-info strong { display:block; font-size:13.5px; font-weight:700; color:var(--navy); margin-bottom:2px; }
+  .settings-row-info span { font-size:12px; color:var(--text-muted); }
+  .toggle {
+    width:44px;height:24px;background:var(--gray-200);border-radius:12px;
+    position:relative;cursor:pointer;transition:background var(--transition);
+    border:none;flex-shrink:0;
+  }
+  .toggle.on { background:var(--accent); }
+  .toggle::after {
+    content:'';position:absolute;top:3px;left:3px;
+    width:18px;height:18px;background:#fff;border-radius:50%;
+    transition:transform var(--transition);
+    box-shadow:0 1px 4px rgba(0,0,0,0.2);
+  }
+  .toggle.on::after { transform:translateX(20px); }
+
+  /* ─── Audit log ─── */
+  .audit-item {
+    display:flex; align-items:flex-start; gap:14px;
+    padding:14px 20px; border-bottom:1px solid var(--gray-100);
+    transition:background var(--transition);
+  }
+  .audit-item:hover { background:var(--gray-50); }
+  .audit-item:last-child { border-bottom:none; }
+  .audit-type-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px; }
+  .audit-body { flex:1; }
+  .audit-action { font-size:13.5px; font-weight:600; color:var(--navy); }
+  .audit-meta { font-size:12px; color:var(--text-muted); margin-top:3px; }
+
+  /* ─── Reports ─── */
+  .report-mini-chart { display:flex; align-items:flex-end; gap:4px; height:48px; }
+  .report-bar { flex:1; background:var(--accent); border-radius:4px 4px 0 0; opacity:0.7; transition:opacity var(--transition); min-width:8px; }
+  .report-bar:hover { opacity:1; }
+
+  /* ─── Template cards ─── */
+  .template-card {
+    background:var(--glass-heavy);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius);
+    overflow:hidden;
+    box-shadow:var(--glass-shadow);
+    transition:all var(--transition);
+  }
+  .template-card:hover { transform:translateY(-3px); box-shadow:0 20px 50px rgba(10,22,40,0.14); }
+  .template-preview {
+    height:140px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:28px;
+    position:relative; overflow:hidden;
+  }
+  .template-body { padding:16px; }
+  .template-name { font-size:14px; font-weight:800; color:var(--navy); margin-bottom:4px; }
+  .template-desc { font-size:12px; color:var(--text-muted); margin-bottom:12px; }
+  .template-meta { display:flex; gap:8px; flex-wrap:wrap; }
+
+  /* ─── Signature cards ─── */
+  .sig-card {
+    background:var(--glass-heavy);
+    border:1.5px dashed var(--gray-200);
+    border-radius:var(--radius); padding:24px;
+    display:flex;flex-direction:column;align-items:center;gap:12px;
+    transition:all var(--transition);
+  }
+  .sig-card.filled { border-style:solid; border-color:var(--glass-border); }
+  .sig-preview {
+    width:180px;height:70px;background:var(--gray-50);
+    border-radius:8px; border:1px solid var(--gray-200);
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;color:var(--text-muted);
+    font-family:cursive;font-size:28px;color:var(--navy-soft);
+    letter-spacing:-2px;
+  }
+  .sig-name { font-size:13px;font-weight:800;color:var(--navy); }
+  .sig-role { font-size:12px;color:var(--text-muted); }
+
+  /* ─── Modal ─── */
+  .modal-overlay {
+    position:fixed;inset:0;background:rgba(10,22,40,0.4);
+    backdrop-filter:blur(6px);z-index:200;
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity var(--transition);
+    padding:20px;
+  }
+  .modal-overlay.open { opacity:1;pointer-events:all; }
+  .modal {
+    background:#fff;border-radius:var(--radius);
+    width:100%;max-width:560px;max-height:90vh;overflow-y:auto;
+    box-shadow:0 30px 80px rgba(10,22,40,0.25);
+    transform:translateY(12px) scale(0.98);
+    transition:transform var(--transition);
+  }
+  .modal-overlay.open .modal { transform:none; }
+  .modal-header { display:flex;align-items:center;justify-content:space-between; padding:24px 24px 0; }
+  .modal-title { font-size:17px;font-weight:900;color:var(--navy);letter-spacing:-0.3px; }
+  .modal-close { background:none;border:none;cursor:pointer;padding:6px;border-radius:7px;color:var(--gray-400);font-size:20px;transition:all var(--transition); }
+  .modal-close:hover { background:var(--gray-100);color:var(--navy); }
+  .modal-body { padding:20px 24px 24px; }
+  .modal-footer { padding:16px 24px; border-top:1px solid var(--gray-100); display:flex;justify-content:flex-end;gap:10px; }
+
+  /* ─── Breadcrumbs ─── */
+  .breadcrumb { display:flex;align-items:center;gap:6px; font-size:12px; color:var(--text-muted); margin-bottom:18px; }
+  .breadcrumb a { color:var(--text-muted);text-decoration:none;font-weight:600; transition:color var(--transition); }
+  .breadcrumb a:hover { color:var(--accent); }
+  .breadcrumb-sep { color:var(--gray-300); }
+  .breadcrumb-current { color:var(--navy);font-weight:700; }
+
+  /* ─── Empty state ─── */
+  .empty-state { text-align:center; padding:48px 20px; }
+  .empty-state-icon { font-size:48px; margin-bottom:14px; opacity:0.5; }
+  .empty-state-title { font-size:16px;font-weight:800;color:var(--navy);margin-bottom:6px; }
+  .empty-state-sub { font-size:13px;color:var(--text-muted);max-width:320px;margin:0 auto 18px; }
+
+  /* ─── Responsive ─── */
+  @media(max-width:900px) {
+    :root { --sidebar-w: 0px; }
+    .sidebar { transform:translateX(-260px); width:260px; }
+    .sidebar.open { transform:translateX(0); }
+    .main { margin-left:0; }
+    .header-hamburger { display:flex; }
+    .header-search { display:none; }
+    .stats-grid { grid-template-columns:repeat(2,1fr); gap:12px; }
+    .content { padding:16px; }
+    .form-grid { grid-template-columns:1fr; }
+    .form-grid-3 { grid-template-columns:1fr; }
+  }
+  @media(max-width:600px) {
+    .stats-grid { grid-template-columns:1fr; }
+    .cert-types-grid { grid-template-columns:1fr; }
+    .header { padding:0 14px; gap:10px; }
+    .page-title { font-size:16px; }
+  }
+  .sidebar-overlay {
+    display:none;position:fixed;inset:0;background:rgba(10,22,40,0.4);z-index:99;
+    backdrop-filter:blur(2px);
+  }
+  .sidebar-overlay.show { display:block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width:5px;height:5px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--gray-300);border-radius:10px; }
+  ::-webkit-scrollbar-thumb:hover { background:var(--gray-400); }
+
+  /* ─── Dashboard Charts ─── */
+  .mini-donut {
+    width:80px;height:80px;border-radius:50%;
+    background: conic-gradient(var(--accent) 0% 68%, var(--gray-100) 68% 100%);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;flex-shrink:0;
+  }
+  .mini-donut::after {
+    content:'68%';position:absolute;
+    width:54px;height:54px;background:#fff;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:900;color:var(--navy);
+  }
+  .donut-label { font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;font-weight:600; }
+
+  /* Queue progress */
+  .queue-item { display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gray-100); }
+  .queue-item:last-child { border-bottom:none; }
+  .queue-name { font-size:13px;font-weight:700;color:var(--navy);flex:1; }
+  .queue-count { font-size:12px;color:var(--text-muted);width:60px;text-align:right; }
+
+  /* Tab system */
+  .tabs { display:flex;gap:4px;padding:4px;background:var(--gray-100);border-radius:10px;margin-bottom:20px;width:fit-content; }
+  .tab { padding:7px 16px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;transition:all var(--transition);color:var(--text-muted);border:none;background:none;font-family:inherit; }
+  .tab.active { background:#fff;color:var(--navy);box-shadow:0 2px 8px rgba(10,22,40,0.08); }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+
+  /* Pagination */
+  .pagination { display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:16px; }
+  .page-btn { width:32px;height:32px;border-radius:7px;border:1px solid var(--gray-200);background:#fff;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--transition); }
+  .page-btn:hover,.page-btn.active { background:var(--accent);color:#fff;border-color:var(--accent); }
+  .page-info { font-size:12.5px;color:var(--text-muted);margin:0 8px; }
+
+  /* ─── Floating generate btn ─── */
+  .fab {
+    position:fixed;bottom:28px;right:28px;
+    background:linear-gradient(135deg,var(--accent),var(--navy-light));
+    color:#fff;border:none;border-radius:50px;
+    padding:14px 22px;font-family:inherit;font-size:14px;font-weight:800;
+    cursor:pointer;box-shadow:0 8px 28px rgba(37,99,235,0.4);
+    display:flex;align-items:center;gap:9px;
+    transition:all var(--transition);z-index:60;
+  }
+  .fab:hover { transform:translateY(-3px);box-shadow:0 14px 36px rgba(37,99,235,0.45); }
+  @media(max-width:600px){ .fab { bottom:16px;right:16px;padding:12px 16px;font-size:13px; } }
+
+  /* Notification dot on nav items */
+  .nav-item .pulse { width:8px;height:8px;border-radius:50%;background:var(--rose);margin-left:auto;animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(1.2)} }
+
+  /* Skeleton loading */
+  .skeleton { background:linear-gradient(90deg,var(--gray-100) 25%,var(--gray-50) 50%,var(--gray-100) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px; }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* Page fade-in */
+  .page.active { animation: fadeUp 0.3s ease forwards; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  /* Role chips */
+  .role-admin { background:rgba(244,63,94,0.08);color:var(--rose); }
+  .role-operator { background:rgba(37,99,235,0.08);color:var(--accent); }
+  .role-viewer { background:rgba(16,185,129,0.08);color:var(--emerald); }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">TC</div>
+    <div class="sidebar-brand">
+      <strong>TMCS — CMS</strong>
+      <span>Certificate Management</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active" onclick="navigate('dashboard',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke-width="2"/></svg>
+        Dashboard
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Management</div>
+      <div class="nav-item" onclick="navigate('members',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
+        Members
+        <span class="nav-badge">1,248</span>
+      </div>
+      <div class="nav-item" onclick="navigate('certificates',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+        Certificates
+        <span class="nav-badge gold">5</span>
+      </div>
+      <div class="nav-item" onclick="navigate('templates',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+        Templates
+      </div>
+      <div class="nav-item" onclick="navigate('signatures',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        Signatures
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Operations</div>
+      <div class="nav-item" onclick="navigate('bulk',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Bulk Import
+        <span class="pulse"></span>
+      </div>
+      <div class="nav-item" onclick="navigate('verification',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        Verification
+      </div>
+      <div class="nav-item" onclick="navigate('reports',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Reports
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">System</div>
+      <div class="nav-item" onclick="navigate('users',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        Users & Roles
+      </div>
+      <div class="nav-item" onclick="navigate('audit',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Audit Logs
+      </div>
+      <div class="nav-item" onclick="navigate('settings',this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg>
+        Settings
+      </div>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="user-avatar">SA</div>
+      <div class="user-info">
+        <strong>Sr. Admin</strong>
+        <span>System Administrator</span>
+      </div>
+      <svg width="14" height="14" fill="none" stroke="rgba(255,255,255,0.35)" viewBox="0 0 24 24" style="margin-left:auto;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7"/></svg>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- ─── HEADER ─── -->
+  <header class="header">
+    <button class="header-hamburger" onclick="toggleSidebar()">
+      <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <div style="flex:1">
+      <div class="page-title" id="headerTitle">Dashboard</div>
+    </div>
+    <div class="header-actions">
+      <div class="header-search">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" stroke-width="2"/><path d="m21 21-4.35-4.35" stroke-width="2" stroke-linecap="round"/></svg>
+        <input placeholder="Search members, certificates…" id="searchInput">
+      </div>
+      <div class="header-btn" title="Notifications">
+        <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span class="notif-dot"></span>
+      </div>
+      <div class="header-btn" title="Help">
+        <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── CONTENT ─── -->
+  <div class="content">
+
+    <!-- ════ DASHBOARD ════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="breadcrumb"><span class="breadcrumb-current">Dashboard</span></div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card" style="--card-accent:linear-gradient(90deg,#2563eb,#60a5fa);--icon-bg:rgba(37,99,235,0.08)">
+          <div class="stat-icon">
+            <svg fill="none" stroke="#2563eb" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/></svg>
+          </div>
+          <div class="stat-value">1,248</div>
+          <div class="stat-label">Total Members</div>
+          <div class="stat-change up">↑ +142 this month</div>
+        </div>
+        <div class="stat-card" style="--card-accent:linear-gradient(90deg,#f59e0b,#fcd34d);--icon-bg:rgba(245,158,11,0.08)">
+          <div class="stat-icon">
+            <svg fill="none" stroke="#f59e0b" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+          </div>
+          <div class="stat-value">3,847</div>
+          <div class="stat-label">Certs Issued</div>
+          <div class="stat-change up">↑ +289 this month</div>
+        </div>
+        <div class="stat-card" style="--card-accent:linear-gradient(90deg,#10b981,#34d399);--icon-bg:rgba(16,185,129,0.08)">
+          <div class="stat-icon">
+            <svg fill="none" stroke="#10b981" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <div class="stat-value">3,791</div>
+          <div class="stat-label">Verified Valid</div>
+          <div class="stat-change up">98.5% validity rate</div>
+        </div>
+        <div class="stat-card" style="--card-accent:linear-gradient(90deg,#8b5cf6,#c4b5fd);--icon-bg:rgba(139,92,246,0.08)">
+          <div class="stat-icon">
+            <svg fill="none" stroke="#8b5cf6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          </div>
+          <div class="stat-value">24</div>
+          <div class="stat-label">Universities</div>
+          <div class="stat-change up">↑ +3 new</div>
+        </div>
+      </div>
+
+      <!-- Two columns -->
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:20px;margin-bottom:20px">
+        <!-- Recent Certificates -->
+        <div class="glass-card">
+          <div style="padding:20px 20px 0">
+            <div class="section-header">
+              <div>
+                <div class="section-title">Recent Certificates</div>
+                <div class="section-subtitle">Last 10 issued certificates</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="navigate('certificates',document.querySelector('[onclick*=certificates]'))">View All</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Member</th><th>Type</th><th>Cert No.</th><th>Date</th><th>Status</th>
+              </tr></thead>
+              <tbody>
+                <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#2563eb,#7c3aed)">JM</div><div><div style="font-weight:700;font-size:13px">Joseph Mwangi</div><div style="font-size:11.5px;color:var(--text-muted)">UDSM</div></div></div></td><td><span class="badge badge-blue">Membership</span></td><td style="font-family:monospace;font-size:12.5px">TMCS-2024-001847</td><td style="font-size:12.5px">Jun 1, 2025</td><td><span class="badge badge-green"><span class="badge-dot" style="background:#10b981"></span>Valid</span></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">AM</div><div><div style="font-weight:700;font-size:13px">Amina Msomi</div><div style="font-size:11.5px;color:var(--text-muted)">SUA</div></div></div></td><td><span class="badge badge-gold">Kamati Tendaji</span></td><td style="font-family:monospace;font-size:12.5px">TMCS-2024-001846</td><td style="font-size:12.5px">Jun 1, 2025</td><td><span class="badge badge-green"><span class="badge-dot" style="background:#10b981"></span>Valid</span></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#10b981,#059669)">PK</div><div><div style="font-weight:700;font-size:13px">Peter Kimani</div><div style="font-size:11.5px;color:var(--text-muted)">MUCE</div></div></div></td><td><span class="badge badge-violet">Spiritual Coord.</span></td><td style="font-family:monospace;font-size:12.5px">TMCS-2024-001845</td><td style="font-size:12.5px">May 31, 2025</td><td><span class="badge badge-green"><span class="badge-dot" style="background:#10b981"></span>Valid</span></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#8b5cf6,#3b82f6)">FL</div><div><div style="font-weight:700;font-size:13px">Fatuma Lema</div><div style="font-size:11.5px;color:var(--text-muted)">UDOM</div></div></div></td><td><span class="badge badge-navy">Community Lead</span></td><td style="font-family:monospace;font-size:12.5px">TMCS-2024-001844</td><td style="font-size:12.5px">May 31, 2025</td><td><span class="badge badge-green"><span class="badge-dot" style="background:#10b981"></span>Valid</span></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#ef4444,#f97316)">RN</div><div><div style="font-weight:700;font-size:13px">Richard Nyundo</div><div style="font-size:11.5px;color:var(--text-muted)">IFM</div></div></div></td><td><span class="badge badge-rose">Group Lead</span></td><td style="font-family:monospace;font-size:12.5px">TMCS-2024-001843</td><td style="font-size:12.5px">May 30, 2025</td><td><span class="badge badge-rose"><span class="badge-dot" style="background:#f43f5e"></span>Expired</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <!-- Cert type distribution -->
+          <div class="glass-card" style="padding:20px">
+            <div class="section-title" style="margin-bottom:14px">Certificate Types</div>
+            <div class="chart-bar-wrap">
+              <div class="chart-bar-item">
+                <div class="chart-bar-header"><span class="chart-bar-label">Membership</span><span class="chart-bar-value">1,420</span></div>
+                <div class="progress"><div class="progress-fill" style="width:90%;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div>
+              </div>
+              <div class="chart-bar-item">
+                <div class="chart-bar-header"><span class="chart-bar-label">Kamati Tendaji</span><span class="chart-bar-value">840</span></div>
+                <div class="progress"><div class="progress-fill" style="width:53%;background:linear-gradient(90deg,#f59e0b,#fcd34d)"></div></div>
+              </div>
+              <div class="chart-bar-item">
+                <div class="chart-bar-header"><span class="chart-bar-label">Community Group</span><span class="chart-bar-value">612</span></div>
+                <div class="progress"><div class="progress-fill" style="width:39%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div>
+              </div>
+              <div class="chart-bar-item">
+                <div class="chart-bar-header"><span class="chart-bar-label">General Community</span><span class="chart-bar-value">580</span></div>
+                <div class="progress"><div class="progress-fill" style="width:37%;background:linear-gradient(90deg,#8b5cf6,#c4b5fd)"></div></div>
+              </div>
+              <div class="chart-bar-item">
+                <div class="chart-bar-header"><span class="chart-bar-label">Spiritual Coord.</span><span class="chart-bar-value">395</span></div>
+                <div class="progress"><div class="progress-fill" style="width:25%;background:linear-gradient(90deg,#f43f5e,#fb7185)"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Queue Status -->
+          <div class="glass-card" style="padding:20px">
+            <div class="section-title" style="margin-bottom:14px">Queue Status</div>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+              <div style="text-align:center">
+                <div style="font-size:26px;font-weight:900;color:var(--accent);letter-spacing:-1px">47</div>
+                <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Processing</div>
+              </div>
+              <div style="flex:1">
+                <div style="font-size:12.5px;font-weight:600;color:var(--text-muted);margin-bottom:6px">Bulk Job #J-1048</div>
+                <div class="progress"><div class="progress-fill" style="width:63%;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px">189 / 300 certs · Est. 4 min</div>
+              </div>
+            </div>
+            <div class="queue-item"><div class="queue-name">J-1047 UDSM Batch</div><span class="badge badge-green">Done</span></div>
+            <div class="queue-item"><div class="queue-name">J-1046 SUA Batch</div><span class="badge badge-green">Done</span></div>
+            <div class="queue-item"><div class="queue-name">J-1049 MUCE Batch</div><span class="badge badge-gray">Queued</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <!-- Activity -->
+        <div class="glass-card" style="padding:20px">
+          <div class="section-title" style="margin-bottom:16px">Recent Activity</div>
+          <div class="timeline">
+            <div class="timeline-item"><div class="timeline-left"><div class="timeline-dot" style="background:rgba(37,99,235,0.1)">📄</div><div class="timeline-line"></div></div><div class="timeline-content"><div class="timeline-title">Bulk generation completed — UDSM</div><div class="timeline-desc">152 membership certificates generated successfully</div><div class="timeline-time">2 minutes ago · by Operator John</div></div></div>
+            <div class="timeline-item"><div class="timeline-left"><div class="timeline-dot" style="background:rgba(16,185,129,0.1)">✅</div><div class="timeline-line"></div></div><div class="timeline-content"><div class="timeline-title">Certificate verified — TMCS-2024-001834</div><div class="timeline-desc">QR scan verification from Dar es Salaam</div><div class="timeline-time">15 minutes ago</div></div></div>
+            <div class="timeline-item"><div class="timeline-left"><div class="timeline-dot" style="background:rgba(245,158,11,0.1)">📤</div><div class="timeline-line"></div></div><div class="timeline-content"><div class="timeline-title">Template updated — Kamati Tendaji</div><div class="timeline-desc">Signature positions reconfigured by admin</div><div class="timeline-time">1 hour ago · by Sr. Admin</div></div></div>
+            <div class="timeline-item"><div class="timeline-left"><div class="timeline-dot" style="background:rgba(139,92,246,0.1)">👤</div><div class="timeline-line"></div></div><div class="timeline-content"><div class="timeline-title">48 new members imported — SUA</div><div class="timeline-desc">Excel bulk import completed, all records validated</div><div class="timeline-time">3 hours ago · by Operator Mary</div></div></div>
+          </div>
+        </div>
+
+        <!-- Universities -->
+        <div class="glass-card" style="padding:20px">
+          <div class="section-title" style="margin-bottom:16px">Top Universities</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:12px"><div style="width:38px;height:38px;border-radius:10px;background:rgba(37,99,235,0.08);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--accent);flex-shrink:0">U</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--navy)">UDSM — Dar es Salaam</div><div class="progress" style="margin-top:5px"><div class="progress-fill" style="width:85%;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div></div><div style="font-size:12.5px;font-weight:800;color:var(--navy);width:36px;text-align:right">312</div></div>
+            <div style="display:flex;align-items:center;gap:12px"><div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.08);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--gold);flex-shrink:0">S</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--navy)">SUA — Sokoine</div><div class="progress" style="margin-top:5px"><div class="progress-fill" style="width:71%;background:linear-gradient(90deg,#f59e0b,#fcd34d)"></div></div></div><div style="font-size:12.5px;font-weight:800;color:var(--navy);width:36px;text-align:right">264</div></div>
+            <div style="display:flex;align-items:center;gap:12px"><div style="width:38px;height:38px;border-radius:10px;background:rgba(16,185,129,0.08);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--emerald);flex-shrink:0">M</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--navy)">MUCE — Makumira</div><div class="progress" style="margin-top:5px"><div class="progress-fill" style="width:58%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div></div><div style="font-size:12.5px;font-weight:800;color:var(--navy);width:36px;text-align:right">216</div></div>
+            <div style="display:flex;align-items:center;gap:12px"><div style="width:38px;height:38px;border-radius:10px;background:rgba(139,92,246,0.08);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--violet);flex-shrink:0">I</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--navy)">IFM — Finance</div><div class="progress" style="margin-top:5px"><div class="progress-fill" style="width:44%;background:linear-gradient(90deg,#8b5cf6,#c4b5fd)"></div></div></div><div style="font-size:12.5px;font-weight:800;color:var(--navy);width:36px;text-align:right">164</div></div>
+            <div style="display:flex;align-items:center;gap:12px"><div style="width:38px;height:38px;border-radius:10px;background:rgba(244,63,94,0.08);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--rose);flex-shrink:0">D</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--navy)">UDOM — Dodoma</div><div class="progress" style="margin-top:5px"><div class="progress-fill" style="width:36%;background:linear-gradient(90deg,#f43f5e,#fb7185)"></div></div></div><div style="font-size:12.5px;font-weight:800;color:var(--navy);width:36px;text-align:right">134</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ MEMBERS ════ -->
+    <div class="page" id="page-members">
+      <div class="breadcrumb"><a href="#">Home</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Members</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:gap">
+        <div><div style="font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-0.5px">Member Registry</div><div style="font-size:13px;color:var(--text-muted);margin-top:2px">Manage all TMCS members across universities</div></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="openModal('bulkModal')">📤 Import Excel</button>
+          <button class="btn btn-primary" onclick="openModal('addMemberModal')">+ Add Member</button>
+        </div>
+      </div>
+
+      <!-- Filter tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="setTab(this,'all')">All Members</button>
+        <button class="tab" onclick="setTab(this,'active')">Active</button>
+        <button class="tab" onclick="setTab(this,'leadership')">Leadership</button>
+        <button class="tab" onclick="setTab(this,'inactive')">Inactive</button>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="glass-card" style="padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <input style="flex:1;min-width:200px;border-color:var(--gray-200)" placeholder="🔍  Search by name, student ID or university…">
+        <select style="width:160px"><option>All Universities</option><option>UDSM</option><option>SUA</option><option>MUCE</option><option>IFM</option><option>UDOM</option></select>
+        <select style="width:150px"><option>All Categories</option><option>Student Member</option><option>Leadership</option><option>Alumni</option></select>
+        <select style="width:130px"><option>All Groups</option><option>Charismatic</option><option>Legio Maria</option><option>Choir</option></select>
+        <button class="btn btn-secondary btn-sm">Export CSV</button>
+      </div>
+
+      <div class="glass-card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th><input type="checkbox" style="width:16px;height:16px;cursor:pointer"></th><th>Member</th><th>Student ID</th><th>University</th><th>Category</th><th>Group</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td><input type="checkbox" style="width:16px;height:16px;cursor:pointer"></td><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#2563eb,#7c3aed)">JM</div><div><div style="font-weight:700;font-size:13px">Joseph Mwangi</div><div style="font-size:11.5px;color:var(--text-muted)">joseph.m@udsm.ac.tz</div></div></div></td><td style="font-family:monospace;font-size:12.5px">2021/UDSM/0482</td><td>UDSM</td><td><span class="badge badge-blue">Student</span></td><td>Charismatic</td><td><span class="badge badge-green"><span class="badge-dot" style="background:#10b981"></span>Active</span></td><td style="font-size:12.5px">Jan 2022</td><td><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm btn-icon">👁</button><button class="btn btn-secondary btn-sm" onclick="openModal('issueCertModal')">🎓 Issue</button></div></td></tr>
+              <tr><td><input type="checkbox" style="width:16px;height:16px;cursor:pointer"></td><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">AM</div><div><div style="font-weight:700;font-size:13px">Amina Msomi</div><div style="font-size:11.5px;color:var(--text-muted)">a.msomi@sua.ac.tz</div></div></div></td><td style="font-family:monospace;font-size:12.5px">2020/SUA/1104</td><td>SUA</td><td><span class="badge badge-gold">Leadership</span></td><td>Choir</td><td><span class="badge badge-green"><span class="badge-dot" style="background:#10b981"></span>Active</span></td><td style="font-size:12.5px">Mar 2021</td><td><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm btn-icon">👁</button><button class="btn btn-secondary btn-sm" onclick="openModal('issueCertModal')">🎓 Issue</button></div></td></tr>
+              <tr><td><input type="checkbox" style="width:16px;height:16px;cursor:pointer"></td><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#10b981,#059669)">PK</div><div><div style="font-weight:700;font-size:13px">Peter Kimani</div><div style="font-size:11.5px;color:var(--text-muted)">peter.k@muce.ac.tz</div></div></div></td><td style="font-family:monospace;font-size:12.5px">2019/MUCE/0731</td><td>MUCE</td><td><span class="badge badge-violet">Spiritual Lead</span></td><td>Legio Maria</td><td><span class="badge badge-green"><span class="badge-dot" style="background:#10b981"></span>Active</span></td><td style="font-size:12.5px">Sep 2020</td><td><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm btn-icon">👁</button><button class="btn btn-secondary btn-sm" onclick="openModal('issueCertModal')">🎓 Issue</button></div></td></tr>
+              <tr><td><input type="checkbox" style="width:16px;height:16px;cursor:pointer"></td><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#8b5cf6,#3b82f6)">FL</div><div><div style="font-weight:700;font-size:13px">Fatuma Lema</div><div style="font-size:11.5px;color:var(--text-muted)">f.lema@udom.ac.tz</div></div></div></td><td style="font-family:monospace;font-size:12.5px">2022/UDOM/0293</td><td>UDOM</td><td><span class="badge badge-blue">Student</span></td><td>—</td><td><span class="badge badge-gray"><span class="badge-dot" style="background:var(--gray-400)"></span>Inactive</span></td><td style="font-size:12.5px">Feb 2023</td><td><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm btn-icon">👁</button><button class="btn btn-secondary btn-sm" onclick="openModal('issueCertModal')">🎓 Issue</button></div></td></tr>
+              <tr><td><input type="checkbox" style="width:16px;height:16px;cursor:pointer"></td><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#ef4444,#f97316)">RN</div><div><div style="font-weight:700;font-size:13px">Richard Nyundo</div><div style="font-size:11.5px;color:var(--text-muted)">r.nyundo@ifm.ac.tz</div></div></div></td><td style="font-family:monospace;font-size:12.5px">2021/IFM/0512</td><td>IFM</td><td><span class="badge badge-gold">Leadership</span></td><td>Charismatic</td><td><span class="badge badge-green"><span class="badge-dot" style="background:#10b981"></span>Active</span></td><td style="font-size:12.5px">Jul 2022</td><td><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm btn-icon">👁</button><button class="btn btn-secondary btn-sm" onclick="openModal('issueCertModal')">🎓 Issue</button></div></td></tr>
+              <tr><td><input type="checkbox" style="width:16px;height:16px;cursor:pointer"></td><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#06b6d4,#0284c7)">GL</div><div><div style="font-weight:700;font-size:13px">Grace Lukumay</div><div style="font-size:11.5px;color:var(--text-muted)">g.lukumay@udsm.ac.tz</div></div></div></td><td style="font-family:monospace;font-size:12.5px">2023/UDSM/0811</td><td>UDSM</td><td><span class="badge badge-blue">Student</span></td><td>Choir</td><td><span class="badge badge-green"><span class="badge-dot" style="background:#10b981"></span>Active</span></td><td style="font-size:12.5px">Oct 2023</td><td><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm btn-icon">👁</button><button class="btn btn-secondary btn-sm" onclick="openModal('issueCertModal')">🎓 Issue</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:14px 16px;border-top:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div style="font-size:12.5px;color:var(--text-muted)">Showing <strong>1–6</strong> of <strong>1,248</strong> members</div>
+          <div class="pagination">
+            <button class="page-btn">‹</button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <span class="page-info">…</span>
+            <button class="page-btn">208</button>
+            <button class="page-btn">›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ CERTIFICATES ════ -->
+    <div class="page" id="page-certificates">
+      <div class="breadcrumb"><a href="#">Home</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Certificates</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <div><div style="font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-0.5px">Certificate Types</div><div style="font-size:13px;color:var(--text-muted);margin-top:2px">5 official TMCS certificate types</div></div>
+        <button class="btn btn-primary">+ New Certificate Type</button>
+      </div>
+
+      <div class="cert-types-grid" style="margin-bottom:28px">
+        <div class="cert-type-card" style="--ct-color:#2563eb;--ct-bg:rgba(37,99,235,0.08)" onclick="showCertDetail('membership')">
+          <div class="ct-icon">🎓</div>
+          <div class="ct-name">Membership Certificate</div>
+          <div class="ct-count">1,420 issued · Active</div>
+          <div class="ct-meta">
+            <span class="badge badge-blue">2 Signatures</span>
+            <span class="badge badge-green">Template ✓</span>
+          </div>
+        </div>
+        <div class="cert-type-card" style="--ct-color:#f59e0b;--ct-bg:rgba(245,158,11,0.08)" onclick="showCertDetail('kamati')">
+          <div class="ct-icon">👑</div>
+          <div class="ct-name">Kamati Tendaji</div>
+          <div class="ct-count">840 issued · Active</div>
+          <div class="ct-meta">
+            <span class="badge badge-gold">3 Signatures</span>
+            <span class="badge badge-green">Template ✓</span>
+          </div>
+        </div>
+        <div class="cert-type-card" style="--ct-color:#10b981;--ct-bg:rgba(16,185,129,0.08)" onclick="showCertDetail('group')">
+          <div class="ct-icon">✝️</div>
+          <div class="ct-name">Community Group Lead</div>
+          <div class="ct-count">612 issued · Active</div>
+          <div class="ct-meta">
+            <span class="badge badge-green">2 Signatures</span>
+            <span class="badge badge-green">Template ✓</span>
+          </div>
+        </div>
+        <div class="cert-type-card" style="--ct-color:#8b5cf6;--ct-bg:rgba(139,92,246,0.08)" onclick="showCertDetail('general')">
+          <div class="ct-icon">🏛️</div>
+          <div class="ct-name">General Community Lead</div>
+          <div class="ct-count">580 issued · Active</div>
+          <div class="ct-meta">
+            <span class="badge badge-violet">2 Signatures</span>
+            <span class="badge badge-green">Template ✓</span>
+          </div>
+        </div>
+        <div class="cert-type-card" style="--ct-color:#f43f5e;--ct-bg:rgba(244,63,94,0.08)" onclick="showCertDetail('spiritual')">
+          <div class="ct-icon">🕊️</div>
+          <div class="ct-name">Spiritual Coordinator</div>
+          <div class="ct-count">395 issued · Active</div>
+          <div class="ct-meta">
+            <span class="badge badge-rose">3 Signatures</span>
+            <span class="badge badge-green">Template ✓</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Certificate list -->
+      <div class="section-header">
+        <div class="section-title">All Issued Certificates</div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary btn-sm" onclick="openModal('issueCertModal')">+ Issue Single</button>
+          <button class="btn btn-primary btn-sm" onclick="navigate('bulk',document.querySelector('[onclick*=bulk]'))">Bulk Generate</button>
+        </div>
+      </div>
+      <div class="glass-card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Certificate No.</th><th>Member</th><th>Type</th><th>University</th><th>Issue Date</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td style="font-family:monospace;font-size:12px;font-weight:700;color:var(--accent)">TMCS-2025-001847</td><td><div style="font-weight:600;font-size:13px">Joseph Mwangi</div></td><td><span class="badge badge-blue">Membership</span></td><td>UDSM</td><td style="font-size:12.5px">Jun 1, 2025</td><td style="font-size:12.5px">Jun 1, 2026</td><td><span class="badge badge-green">Valid</span></td><td><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm btn-icon" title="Download">⬇</button><button class="btn btn-ghost btn-sm btn-icon" title="View QR">📱</button></div></td></tr>
+              <tr><td style="font-family:monospace;font-size:12px;font-weight:700;color:var(--accent)">TMCS-2025-001846</td><td><div style="font-weight:600;font-size:13px">Amina Msomi</div></td><td><span class="badge badge-gold">Kamati Tendaji</span></td><td>SUA</td><td style="font-size:12.5px">Jun 1, 2025</td><td style="font-size:12.5px">Jun 1, 2026</td><td><span class="badge badge-green">Valid</span></td><td><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm btn-icon">⬇</button><button class="btn btn-ghost btn-sm btn-icon">📱</button></div></td></tr>
+              <tr><td style="font-family:monospace;font-size:12px;font-weight:700;color:var(--accent)">TMCS-2025-001845</td><td><div style="font-weight:600;font-size:13px">Peter Kimani</div></td><td><span class="badge badge-violet">Spiritual Coord.</span></td><td>MUCE</td><td style="font-size:12.5px">May 31, 2025</td><td style="font-size:12.5px">May 31, 2026</td><td><span class="badge badge-green">Valid</span></td><td><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm btn-icon">⬇</button><button class="btn btn-ghost btn-sm btn-icon">📱</button></div></td></tr>
+              <tr><td style="font-family:monospace;font-size:12px;font-weight:700;color:var(--accent)">TMCS-2024-001123</td><td><div style="font-weight:600;font-size:13px">Richard Nyundo</div></td><td><span class="badge badge-rose">Group Lead</span></td><td>IFM</td><td style="font-size:12.5px">May 30, 2024</td><td style="font-size:12.5px">May 30, 2025</td><td><span class="badge badge-rose">Expired</span></td><td><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm btn-icon">⬇</button><button class="btn btn-ghost btn-sm btn-icon">📱</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:14px 16px;border-top:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12.5px;color:var(--text-muted)">Showing 1–4 of 3,847</span>
+          <div class="pagination"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">›</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ TEMPLATES ════ -->
+    <div class="page" id="page-templates">
+      <div class="breadcrumb"><a href="#">Home</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Templates</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <div><div style="font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-0.5px">PDF Templates</div><div style="font-size:13px;color:var(--text-muted)">Each certificate type uses a unique, dedicated template</div></div>
+        <button class="btn btn-primary">+ Upload Template</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;margin-bottom:28px">
+        <!-- Template 1 -->
+        <div class="template-card">
+          <div class="template-preview" style="background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(96,165,250,0.12))">
+            <div style="text-align:center">
+              <div style="font-size:32px">🎓</div>
+              <div style="font-size:11px;font-weight:700;color:var(--navy-soft);letter-spacing:1px;text-transform:uppercase;margin-top:6px">Membership Certificate</div>
+              <div style="width:120px;height:2px;background:linear-gradient(90deg,#2563eb,#60a5fa);margin:8px auto"></div>
+            </div>
+          </div>
+          <div class="template-body">
+            <div class="template-name">template_membership_v3.pdf</div>
+            <div class="template-desc">Official TMCS membership certificate with cross watermark and gold border. Fields: name (x:310,y:242), role, date, cert no.</div>
+            <div class="template-meta">
+              <span class="badge badge-blue">A4 Landscape</span>
+              <span class="badge badge-green">Active</span>
+              <span class="badge badge-gray">v3.0</span>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:8px">
+              <button class="btn btn-secondary btn-sm" style="flex:1">⚙ Configure</button>
+              <button class="btn btn-primary btn-sm" style="flex:1">Preview</button>
+            </div>
+          </div>
+        </div>
+        <!-- Template 2 -->
+        <div class="template-card">
+          <div class="template-preview" style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(252,211,77,0.14))">
+            <div style="text-align:center">
+              <div style="font-size:32px">👑</div>
+              <div style="font-size:11px;font-weight:700;color:#92400e;letter-spacing:1px;text-transform:uppercase;margin-top:6px">Kamati Tendaji</div>
+              <div style="width:120px;height:2px;background:linear-gradient(90deg,#f59e0b,#fcd34d);margin:8px auto"></div>
+            </div>
+          </div>
+          <div class="template-body">
+            <div class="template-name">template_kamati_v2.pdf</div>
+            <div class="template-desc">Leadership certificate with 3-signature panel and TMCS emblem. Fields: name, title, mandate period, all 3 signatories.</div>
+            <div class="template-meta">
+              <span class="badge badge-gold">A4 Portrait</span>
+              <span class="badge badge-green">Active</span>
+              <span class="badge badge-gray">v2.0</span>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:8px">
+              <button class="btn btn-secondary btn-sm" style="flex:1">⚙ Configure</button>
+              <button class="btn btn-primary btn-sm" style="flex:1">Preview</button>
+            </div>
+          </div>
+        </div>
+        <!-- Template 3 -->
+        <div class="template-card">
+          <div class="template-preview" style="background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(52,211,153,0.14))">
+            <div style="text-align:center">
+              <div style="font-size:32px">✝️</div>
+              <div style="font-size:11px;font-weight:700;color:#065f46;letter-spacing:1px;text-transform:uppercase;margin-top:6px">Community Group Lead</div>
+              <div style="width:120px;height:2px;background:linear-gradient(90deg,#10b981,#34d399);margin:8px auto"></div>
+            </div>
+          </div>
+          <div class="template-body">
+            <div class="template-name">template_group_lead_v1.pdf</div>
+            <div class="template-desc">Group leadership cert for Charismatic, Legio Maria, Choir, etc. Includes group emblem and group coordinator signature.</div>
+            <div class="template-meta">
+              <span class="badge badge-green">A4 Portrait</span>
+              <span class="badge badge-green">Active</span>
+              <span class="badge badge-gray">v1.2</span>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:8px">
+              <button class="btn btn-secondary btn-sm" style="flex:1">⚙ Configure</button>
+              <button class="btn btn-primary btn-sm" style="flex:1">Preview</button>
+            </div>
+          </div>
+        </div>
+        <!-- Template 4 -->
+        <div class="template-card">
+          <div class="template-preview" style="background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(196,181,253,0.14))">
+            <div style="text-align:center">
+              <div style="font-size:32px">🏛️</div>
+              <div style="font-size:11px;font-weight:700;color:#4c1d95;letter-spacing:1px;text-transform:uppercase;margin-top:6px">General Community Lead</div>
+              <div style="width:120px;height:2px;background:linear-gradient(90deg,#8b5cf6,#c4b5fd);margin:8px auto"></div>
+            </div>
+          </div>
+          <div class="template-body">
+            <div class="template-name">template_general_lead_v1.pdf</div>
+            <div class="template-desc">General community leadership at university level. Features university seal, dual signature from Chairperson and Chaplain.</div>
+            <div class="template-meta">
+              <span class="badge badge-violet">A4 Landscape</span>
+              <span class="badge badge-green">Active</span>
+              <span class="badge badge-gray">v1.0</span>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:8px">
+              <button class="btn btn-secondary btn-sm" style="flex:1">⚙ Configure</button>
+              <button class="btn btn-primary btn-sm" style="flex:1">Preview</button>
+            </div>
+          </div>
+        </div>
+        <!-- Template 5 -->
+        <div class="template-card">
+          <div class="template-preview" style="background:linear-gradient(135deg,rgba(244,63,94,0.08),rgba(251,113,133,0.14))">
+            <div style="text-align:center">
+              <div style="font-size:32px">🕊️</div>
+              <div style="font-size:11px;font-weight:700;color:#881337;letter-spacing:1px;text-transform:uppercase;margin-top:6px">Spiritual Coordinator</div>
+              <div style="width:120px;height:2px;background:linear-gradient(90deg,#f43f5e,#fb7185);margin:8px auto"></div>
+            </div>
+          </div>
+          <div class="template-body">
+            <div class="template-name">template_spiritual_v2.pdf</div>
+            <div class="template-desc">Spiritual coordinator cert with dove emblem and prayer text. 3 signatories: Chaplain, National Coordinator, Bishop representative.</div>
+            <div class="template-meta">
+              <span class="badge badge-rose">A4 Portrait</span>
+              <span class="badge badge-green">Active</span>
+              <span class="badge badge-gray">v2.1</span>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:8px">
+              <button class="btn btn-secondary btn-sm" style="flex:1">⚙ Configure</button>
+              <button class="btn btn-primary btn-sm" style="flex:1">Preview</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layout Config -->
+      <div class="glass-card" style="padding:22px">
+        <div class="section-title" style="margin-bottom:16px">Layout Configuration — Membership Certificate</div>
+        <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:16px;font-family:monospace;font-size:12.5px;color:var(--text-secondary);line-height:1.8;overflow-x:auto">
+<pre style="margin:0;color:var(--navy)">{
+  <span style="color:#2563eb">"template_id"</span>: <span style="color:#10b981">"membership_v3"</span>,
+  <span style="color:#2563eb">"page_size"</span>: <span style="color:#10b981">"A4"</span>, <span style="color:#2563eb">"orientation"</span>: <span style="color:#10b981">"landscape"</span>,
+  <span style="color:#2563eb">"fields"</span>: {
+    <span style="color:#8b5cf6">"member_name"</span>: { <span style="color:#2563eb">"x"</span>: 310, <span style="color:#2563eb">"y"</span>: 242, <span style="color:#2563eb">"font"</span>: <span style="color:#10b981">"CenturyGothic"</span>, <span style="color:#2563eb">"size"</span>: 28, <span style="color:#2563eb">"align"</span>: <span style="color:#10b981">"center"</span>, <span style="color:#2563eb">"color"</span>: <span style="color:#10b981">"#1a3260"</span> },
+    <span style="color:#8b5cf6">"cert_number"</span>: { <span style="color:#2563eb">"x"</span>: 68, <span style="color:#2563eb">"y"</span>: 48, <span style="color:#2563eb">"font"</span>: <span style="color:#10b981">"Courier"</span>, <span style="color:#2563eb">"size"</span>: 9, <span style="color:#2563eb">"color"</span>: <span style="color:#10b981">"#64748b"</span> },
+    <span style="color:#8b5cf6">"issue_date"</span>:  { <span style="color:#2563eb">"x"</span>: 310, <span style="color:#2563eb">"y"</span>: 295, <span style="color:#2563eb">"font"</span>: <span style="color:#10b981">"CenturyGothic"</span>, <span style="color:#2563eb">"size"</span>: 14 },
+    <span style="color:#8b5cf6">"university"</span>:  { <span style="color:#2563eb">"x"</span>: 310, <span style="color:#2563eb">"y"</span>: 268, <span style="color:#2563eb">"font"</span>: <span style="color:#10b981">"CenturyGothic"</span>, <span style="color:#2563eb">"size"</span>: 13 }
+  },
+  <span style="color:#2563eb">"signatures"</span>: [
+    { <span style="color:#2563eb">"id"</span>: <span style="color:#10b981">"chairperson"</span>, <span style="color:#2563eb">"x"</span>: 148, <span style="color:#2563eb">"y"</span>: 360, <span style="color:#2563eb">"w"</span>: 120, <span style="color:#2563eb">"h"</span>: 45 },
+    { <span style="color:#2563eb">"id"</span>: <span style="color:#10b981">"chaplain"</span>,    <span style="color:#2563eb">"x"</span>: 468, <span style="color:#2563eb">"y"</span>: 360, <span style="color:#2563eb">"w"</span>: 120, <span style="color:#2563eb">"h"</span>: 45 }
+  ],
+  <span style="color:#2563eb">"qr_code"</span>: { <span style="color:#2563eb">"x"</span>: 534, <span style="color:#2563eb">"y"</span>: 22, <span style="color:#2563eb">"size"</span>: 64, <span style="color:#2563eb">"url_prefix"</span>: <span style="color:#10b981">"https://verify.tmcs.or.tz/c/"</span> }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ SIGNATURES ════ -->
+    <div class="page" id="page-signatures">
+      <div class="breadcrumb"><a href="#">Home</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Signatures</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <div><div style="font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-0.5px">Digital Signatures</div><div style="font-size:13px;color:var(--text-muted)">Official authority signatures for certificate authentication</div></div>
+        <button class="btn btn-primary" onclick="openModal('addSigModal')">+ Upload Signature</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:24px">
+        <div class="sig-card filled">
+          <div class="sig-preview" style="font-family:cursive;font-size:26px;color:var(--navy-soft);font-style:italic">Fr. Mwenda</div>
+          <div style="text-align:center">
+            <div class="sig-name">Rev. Fr. Josephat Mwenda</div>
+            <div class="sig-role">National Chaplain</div>
+          </div>
+          <div style="display:flex;gap:8px;width:100%">
+            <span class="badge badge-green" style="flex:1;justify-content:center">Active</span>
+            <span class="badge badge-blue" style="flex:1;justify-content:center">3 certs</span>
+          </div>
+          <div style="display:flex;gap:6px;width:100%">
+            <button class="btn btn-secondary btn-sm" style="flex:1">Replace</button>
+            <button class="btn btn-danger btn-sm" style="flex:1">Remove</button>
+          </div>
+        </div>
+        <div class="sig-card filled">
+          <div class="sig-preview" style="font-family:cursive;font-size:26px;color:var(--navy-soft);font-style:italic">A. Makundi</div>
+          <div style="text-align:center">
+            <div class="sig-name">Agnes Makundi</div>
+            <div class="sig-role">National Chairperson</div>
+          </div>
+          <div style="display:flex;gap:8px;width:100%">
+            <span class="badge badge-green" style="flex:1;justify-content:center">Active</span>
+            <span class="badge badge-blue" style="flex:1;justify-content:center">5 certs</span>
+          </div>
+          <div style="display:flex;gap:6px;width:100%">
+            <button class="btn btn-secondary btn-sm" style="flex:1">Replace</button>
+            <button class="btn btn-danger btn-sm" style="flex:1">Remove</button>
+          </div>
+        </div>
+        <div class="sig-card filled">
+          <div class="sig-preview" style="font-family:cursive;font-size:26px;color:var(--navy-soft);font-style:italic">T. Ngowi</div>
+          <div style="text-align:center">
+            <div class="sig-name">Thomas Ngowi</div>
+            <div class="sig-role">National Coordinator</div>
+          </div>
+          <div style="display:flex;gap:8px;width:100%">
+            <span class="badge badge-green" style="flex:1;justify-content:center">Active</span>
+            <span class="badge badge-blue" style="flex:1;justify-content:center">2 certs</span>
+          </div>
+          <div style="display:flex;gap:6px;width:100%">
+            <button class="btn btn-secondary btn-sm" style="flex:1">Replace</button>
+            <button class="btn btn-danger btn-sm" style="flex:1">Remove</button>
+          </div>
+        </div>
+        <div class="sig-card">
+          <div style="font-size:36px;opacity:0.3">✍️</div>
+          <div style="text-align:center;color:var(--text-muted)">
+            <div style="font-size:13px;font-weight:700;margin-bottom:4px">Bishop Representative</div>
+            <div style="font-size:12px">Slot available</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addSigModal')">Upload PNG</button>
+        </div>
+      </div>
+
+      <!-- Signature-to-cert mapping -->
+      <div class="glass-card" style="padding:22px">
+        <div class="section-title" style="margin-bottom:16px">Signature Assignments</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Certificate Type</th><th>Signature 1</th><th>Signature 2</th><th>Signature 3</th><th>QR Position</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge badge-blue">Membership</span></td><td>National Chairperson</td><td>National Chaplain</td><td>—</td><td style="font-size:12px;font-family:monospace">x:534 y:22</td></tr>
+              <tr><td><span class="badge badge-gold">Kamati Tendaji</span></td><td>National Chairperson</td><td>National Chaplain</td><td>National Coord.</td><td style="font-size:12px;font-family:monospace">x:498 y:18</td></tr>
+              <tr><td><span class="badge badge-green">Community Group</span></td><td>National Chairperson</td><td>Group Coordinator</td><td>—</td><td style="font-size:12px;font-family:monospace">x:510 y:20</td></tr>
+              <tr><td><span class="badge badge-violet">General Community</span></td><td>National Chairperson</td><td>National Chaplain</td><td>—</td><td style="font-size:12px;font-family:monospace">x:510 y:20</td></tr>
+              <tr><td><span class="badge badge-rose">Spiritual Coord.</span></td><td>National Chaplain</td><td>National Coord.</td><td>Bishop Rep.</td><td style="font-size:12px;font-family:monospace">x:488 y:18</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ BULK IMPORT ════ -->
+    <div class="page" id="page-bulk">
+      <div class="breadcrumb"><a href="#">Home</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Bulk Import & Generation</span></div>
+      <div style="font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-0.5px;margin-bottom:4px">Bulk Certificate Generation</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:24px">Upload Excel file, map columns, and generate certificates in batch</div>
+
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <!-- Step 1 -->
+          <div class="glass-card" style="padding:22px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+              <div style="font-size:15px;font-weight:800;color:var(--navy)">Upload Excel / CSV File</div>
+            </div>
+            <div class="upload-zone">
+              <div class="upload-icon">📊</div>
+              <div class="upload-title">Drag & drop your Excel file here</div>
+              <div class="upload-sub">Supports .xlsx, .xls, .csv — max 10MB</div>
+              <button class="btn btn-primary" style="margin-top:14px">Browse Files</button>
+            </div>
+            <div style="margin-top:12px;display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(37,99,235,0.05);border-radius:8px;border:1px solid rgba(37,99,235,0.1)">
+              <span style="font-size:20px">📋</span>
+              <div style="flex:1"><div style="font-size:12.5px;font-weight:700;color:var(--navy)">members_udsm_june2025.xlsx</div><div style="font-size:11.5px;color:var(--text-muted)">152 rows detected · 8 columns</div></div>
+              <span class="badge badge-green">Loaded</span>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="glass-card" style="padding:22px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+              <div style="font-size:15px;font-weight:800;color:var(--navy)">Map Columns to System Fields</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:grid;grid-template-columns:1fr 24px 1fr;align-items:center;gap:10px">
+                <div style="background:var(--gray-100);border-radius:8px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--navy)">Full Name</div>
+                <div style="text-align:center;color:var(--accent);font-weight:800">→</div>
+                <select><option>member_name ✓</option></select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 24px 1fr;align-items:center;gap:10px">
+                <div style="background:var(--gray-100);border-radius:8px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--navy)">Student ID</div>
+                <div style="text-align:center;color:var(--accent);font-weight:800">→</div>
+                <select><option>student_id ✓</option></select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 24px 1fr;align-items:center;gap:10px">
+                <div style="background:var(--gray-100);border-radius:8px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--navy)">University</div>
+                <div style="text-align:center;color:var(--accent);font-weight:800">→</div>
+                <select><option>university ✓</option></select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 24px 1fr;align-items:center;gap:10px">
+                <div style="background:var(--gray-100);border-radius:8px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--navy)">Role / Position</div>
+                <div style="text-align:center;color:var(--accent);font-weight:800">→</div>
+                <select><option>role ✓</option></select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 24px 1fr;align-items:center;gap:10px">
+                <div style="background:var(--gray-100);border-radius:8px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--navy)">Issue Date</div>
+                <div style="text-align:center;color:var(--accent);font-weight:800">→</div>
+                <select><option>issue_date ✓</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="glass-card" style="padding:22px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+              <div style="font-size:15px;font-weight:800;color:var(--navy)">Configure Generation</div>
+            </div>
+            <div class="form-grid">
+              <div class="form-group"><label>Certificate Type</label><select><option>Membership Certificate</option><option>Kamati Tendaji</option><option>Community Group Lead</option><option>General Community Lead</option><option>Spiritual Coordinator</option></select></div>
+              <div class="form-group"><label>Issue Date Override</label><input type="date" value="2025-06-01"></div>
+              <div class="form-group"><label>QR Verification URL</label><input value="https://verify.tmcs.or.tz/c/"></div>
+              <div class="form-group"><label>Cert No. Prefix</label><input value="TMCS-2025-"></div>
+            </div>
+            <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-secondary">Preview Sample (1 cert)</button>
+              <button class="btn btn-primary" style="flex:1" onclick="showBulkProgress()">🚀 Generate 152 Certificates</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Queue & History -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="glass-card" style="padding:20px" id="bulkProgressCard">
+            <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:14px">Current Job</div>
+            <div style="text-align:center;padding:20px 0">
+              <div style="font-size:36px;font-weight:900;color:var(--accent);letter-spacing:-2px" id="bulkProgressNum">0</div>
+              <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">of 152 generated</div>
+              <div class="progress" style="margin:14px 0 8px"><div class="progress-fill" style="background:linear-gradient(90deg,#2563eb,#60a5fa)" id="bulkProgressBar" ></div></div>
+              <div style="font-size:12px;color:var(--text-muted)" id="bulkStatus">Ready to start</div>
+            </div>
+            <button class="btn btn-primary" style="width:100%" id="downloadZipBtn" style="display:none" disabled>⬇ Download ZIP</button>
+          </div>
+
+          <div class="glass-card" style="padding:20px">
+            <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:14px">Import History</div>
+            <div style="display:flex;flex-direction:column;gap:0">
+              <div class="audit-item" style="padding:10px 0">
+                <div class="audit-type-dot" style="background:var(--emerald)"></div>
+                <div class="audit-body"><div class="audit-action">UDSM — Membership ×152</div><div class="audit-meta">Jun 1, 2025 · Completed · ZIP ready</div></div>
+                <button class="btn btn-secondary btn-sm">⬇</button>
+              </div>
+              <div class="audit-item" style="padding:10px 0">
+                <div class="audit-type-dot" style="background:var(--emerald)"></div>
+                <div class="audit-body"><div class="audit-action">SUA — Kamati ×48</div><div class="audit-meta">May 31, 2025 · Completed</div></div>
+                <button class="btn btn-secondary btn-sm">⬇</button>
+              </div>
+              <div class="audit-item" style="padding:10px 0">
+                <div class="audit-type-dot" style="background:var(--rose)"></div>
+                <div class="audit-body"><div class="audit-action">MUCE — Spiritual ×24</div><div class="audit-meta">May 29, 2025 · Failed (3 invalid rows)</div></div>
+                <button class="btn btn-ghost btn-sm">View</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ VERIFICATION ════ -->
+    <div class="page" id="page-verification">
+      <div class="breadcrumb"><a href="#">Home</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Certificate Verification</span></div>
+      <div style="font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-0.5px;margin-bottom:4px">QR Code Verification</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:24px">Verify the authenticity of any TMCS certificate by entering its certificate number</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+        <div>
+          <div class="verify-card">
+            <div style="text-align:center;margin-bottom:24px">
+              <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,var(--accent),var(--navy-light));display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px;box-shadow:0 8px 24px rgba(37,99,235,0.3)">🔍</div>
+              <div style="font-size:18px;font-weight:900;color:var(--navy)">Verify Certificate</div>
+              <div style="font-size:13px;color:var(--text-muted);margin-top:4px">Enter a certificate number or scan QR code</div>
+            </div>
+            <div class="form-group" style="margin-bottom:14px">
+              <label>Certificate Number</label>
+              <input id="certNumInput" placeholder="e.g. TMCS-2025-001847" style="font-family:monospace;font-size:14px;text-align:center;letter-spacing:1px">
+            </div>
+            <button class="btn btn-primary" style="width:100%;padding:12px;font-size:14px" onclick="verifyCertificate()">Verify Certificate</button>
+            <div style="text-align:center;margin-top:14px;font-size:12.5px;color:var(--text-muted)">Or scan the QR code on the physical certificate</div>
+          </div>
+
+          <!-- Result -->
+          <div class="verify-result show" id="verifyResult">
+            <div class="verify-status valid">
+              <div class="verify-status-icon">✅</div>
+              <div class="verify-status-text">
+                <strong style="color:var(--emerald)">Certificate is VALID</strong>
+                <div style="font-size:12px;color:var(--text-muted)">This certificate has been verified as authentic</div>
+              </div>
+            </div>
+            <div class="verify-fields">
+              <div class="verify-field"><div class="verify-field-label">Full Name</div><div class="verify-field-value">Joseph Mwangi</div></div>
+              <div class="verify-field"><div class="verify-field-label">Certificate Type</div><div class="verify-field-value"><span class="badge badge-blue">Membership Certificate</span></div></div>
+              <div class="verify-field"><div class="verify-field-label">Certificate No.</div><div class="verify-field-value" style="font-family:monospace;font-size:13px">TMCS-2025-001847</div></div>
+              <div class="verify-field"><div class="verify-field-label">University</div><div class="verify-field-value">University of Dar es Salaam (UDSM)</div></div>
+              <div class="verify-field"><div class="verify-field-label">Issue Date</div><div class="verify-field-value">June 1, 2025</div></div>
+              <div class="verify-field"><div class="verify-field-label">Valid Until</div><div class="verify-field-value">June 1, 2026</div></div>
+              <div class="verify-field"><div class="verify-field-label">Status</div><div class="verify-field-value"><span class="badge badge-green">● Valid &amp; Active</span></div></div>
+              <div class="verify-field"><div class="verify-field-label">Verified At</div><div class="verify-field-value" style="font-size:12px">June 2, 2025 · 10:34 AM EAT</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="glass-card" style="padding:20px">
+            <div class="section-title" style="margin-bottom:14px">Verification Stats</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div style="background:rgba(37,99,235,0.06);border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:900;color:var(--accent)">1,847</div><div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px">Total Scans</div></div>
+              <div style="background:rgba(16,185,129,0.06);border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:900;color:var(--emerald)">98.5%</div><div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px">Valid Rate</div></div>
+              <div style="background:rgba(244,63,94,0.06);border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:900;color:var(--rose)">28</div><div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px">Invalid Attempts</div></div>
+              <div style="background:rgba(245,158,11,0.06);border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:900;color:var(--gold)">142</div><div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px">Scans Today</div></div>
+            </div>
+          </div>
+
+          <div class="glass-card" style="padding:20px">
+            <div class="section-title" style="margin-bottom:14px">Recent Verification Log</div>
+            <div>
+              <div class="audit-item" style="padding:10px 0"><div class="audit-type-dot" style="background:var(--emerald)"></div><div class="audit-body"><div class="audit-action">TMCS-2025-001847 — Valid</div><div class="audit-meta">Joseph Mwangi · 2 mins ago · Dar es Salaam</div></div></div>
+              <div class="audit-item" style="padding:10px 0"><div class="audit-type-dot" style="background:var(--emerald)"></div><div class="audit-body"><div class="audit-action">TMCS-2025-001832 — Valid</div><div class="audit-meta">Amina Msomi · 18 mins ago · Morogoro</div></div></div>
+              <div class="audit-item" style="padding:10px 0"><div class="audit-type-dot" style="background:var(--rose)"></div><div class="audit-body"><div class="audit-action">TMCS-FAKE-000001 — Invalid</div><div class="audit-meta">Unknown · 1 hr ago · Mwanza</div></div></div>
+              <div class="audit-item" style="padding:10px 0"><div class="audit-type-dot" style="background:var(--emerald)"></div><div class="audit-body"><div class="audit-action">TMCS-2025-001819 — Valid</div><div class="audit-meta">Peter Kimani · 2 hrs ago · Arusha</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ REPORTS ════ -->
+    <div class="page" id="page-reports">
+      <div class="breadcrumb"><a href="#">Home</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Reports</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <div><div style="font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-0.5px">Reports & Analytics</div><div style="font-size:13px;color:var(--text-muted)">Certificate issuance and system performance metrics</div></div>
+        <div style="display:flex;gap:10px">
+          <select style="width:160px"><option>Last 12 Months</option><option>Last 6 Months</option><option>This Year</option></select>
+          <button class="btn btn-primary">Export PDF</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+        <div class="glass-card" style="padding:20px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+            <div><div style="font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:4px">Certificates / Month</div><div style="font-size:26px;font-weight:900;color:var(--navy);letter-spacing:-1px">320<span style="font-size:14px;color:var(--emerald);font-weight:700;margin-left:6px">avg</span></div></div>
+          </div>
+          <div class="report-mini-chart">
+            <div class="report-bar" style="height:48%"></div><div class="report-bar" style="height:62%"></div><div class="report-bar" style="height:55%"></div><div class="report-bar" style="height:74%"></div><div class="report-bar" style="height:68%"></div><div class="report-bar" style="height:82%"></div><div class="report-bar" style="height:90%;background:var(--gold)"></div>
+          </div>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:8px">Jan → Jul 2025</div>
+        </div>
+        <div class="glass-card" style="padding:20px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+            <div><div style="font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:4px">New Members / Month</div><div style="font-size:26px;font-weight:900;color:var(--navy);letter-spacing:-1px">104<span style="font-size:14px;color:var(--emerald);font-weight:700;margin-left:6px">avg</span></div></div>
+          </div>
+          <div class="report-mini-chart">
+            <div class="report-bar" style="height:50%;background:var(--emerald)"></div><div class="report-bar" style="height:70%;background:var(--emerald)"></div><div class="report-bar" style="height:60%;background:var(--emerald)"></div><div class="report-bar" style="height:85%;background:var(--emerald)"></div><div class="report-bar" style="height:72%;background:var(--emerald)"></div><div class="report-bar" style="height:65%;background:var(--emerald)"></div><div class="report-bar" style="height:95%;background:var(--gold)"></div>
+          </div>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:8px">Jan → Jul 2025</div>
+        </div>
+        <div class="glass-card" style="padding:20px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+            <div><div style="font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:4px">Verifications / Month</div><div style="font-size:26px;font-weight:900;color:var(--navy);letter-spacing:-1px">264<span style="font-size:14px;color:var(--emerald);font-weight:700;margin-left:6px">avg</span></div></div>
+          </div>
+          <div class="report-mini-chart">
+            <div class="report-bar" style="height:35%;background:var(--violet)"></div><div class="report-bar" style="height:55%;background:var(--violet)"></div><div class="report-bar" style="height:66%;background:var(--violet)"></div><div class="report-bar" style="height:78%;background:var(--violet)"></div><div class="report-bar" style="height:70%;background:var(--violet)"></div><div class="report-bar" style="height:88%;background:var(--violet)"></div><div class="report-bar" style="height:80%;background:var(--gold)"></div>
+          </div>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:8px">Jan → Jul 2025</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="glass-card" style="padding:22px">
+          <div class="section-title" style="margin-bottom:16px">By Certificate Type (2025)</div>
+          <div class="chart-bar-wrap">
+            <div class="chart-bar-item"><div class="chart-bar-header"><span class="chart-bar-label">Membership</span><span class="chart-bar-value">1,420</span></div><div class="progress"><div class="progress-fill" style="width:90%;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div></div>
+            <div class="chart-bar-item"><div class="chart-bar-header"><span class="chart-bar-label">Kamati Tendaji</span><span class="chart-bar-value">840</span></div><div class="progress"><div class="progress-fill" style="width:53%;background:linear-gradient(90deg,#f59e0b,#fcd34d)"></div></div></div>
+            <div class="chart-bar-item"><div class="chart-bar-header"><span class="chart-bar-label">Community Group</span><span class="chart-bar-value">612</span></div><div class="progress"><div class="progress-fill" style="width:39%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div></div>
+            <div class="chart-bar-item"><div class="chart-bar-header"><span class="chart-bar-label">General Community</span><span class="chart-bar-value">580</span></div><div class="progress"><div class="progress-fill" style="width:37%;background:linear-gradient(90deg,#8b5cf6,#c4b5fd)"></div></div></div>
+            <div class="chart-bar-item"><div class="chart-bar-header"><span class="chart-bar-label">Spiritual Coord.</span><span class="chart-bar-value">395</span></div><div class="progress"><div class="progress-fill" style="width:25%;background:linear-gradient(90deg,#f43f5e,#fb7185)"></div></div></div>
+          </div>
+        </div>
+        <div class="glass-card" style="padding:22px">
+          <div class="section-title" style="margin-bottom:16px">By University (Top 8)</div>
+          <div class="chart-bar-wrap">
+            <div class="chart-bar-item"><div class="chart-bar-header"><span class="chart-bar-label">UDSM</span><span class="chart-bar-value">312</span></div><div class="progress"><div class="progress-fill" style="width:88%;background:linear-gradient(90deg,#0a1628,#1a3260)"></div></div></div>
+            <div class="chart-bar-item"><div class="chart-bar-header"><span class="chart-bar-label">SUA</span><span class="chart-bar-value">264</span></div><div class="progress"><div class="progress-fill" style="width:75%;background:linear-gradient(90deg,#0a1628,#1a3260)"></div></div></div>
+            <div class="chart-bar-item"><div class="chart-bar-header"><span class="chart-bar-label">MUCE</span><span class="chart-bar-value">216</span></div><div class="progress"><div class="progress-fill" style="width:61%;background:linear-gradient(90deg,#0a1628,#1a3260)"></div></div></div>
+            <div class="chart-bar-item"><div class="chart-bar-header"><span class="chart-bar-label">IFM</span><span class="chart-bar-value">164</span></div><div class="progress"><div class="progress-fill" style="width:46%;background:linear-gradient(90deg,#0a1628,#1a3260)"></div></div></div>
+            <div class="chart-bar-item"><div class="chart-bar-header"><span class="chart-bar-label">UDOM</span><span class="chart-bar-value">134</span></div><div class="progress"><div class="progress-fill" style="width:38%;background:linear-gradient(90deg,#0a1628,#1a3260)"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ USERS & ROLES ════ -->
+    <div class="page" id="page-users">
+      <div class="breadcrumb"><a href="#">Home</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Users & Roles</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <div><div style="font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-0.5px">Users & Roles</div><div style="font-size:13px;color:var(--text-muted)">Manage system access and permissions</div></div>
+        <button class="btn btn-primary" onclick="openModal('addUserModal')">+ Add User</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">
+        <div class="glass-card" style="padding:18px;border-top:3px solid var(--rose)">
+          <div style="font-size:24px;font-weight:900;color:var(--rose)">3</div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy)">Administrators</div>
+          <div style="font-size:12px;color:var(--text-muted)">Full system access</div>
+        </div>
+        <div class="glass-card" style="padding:18px;border-top:3px solid var(--accent)">
+          <div style="font-size:24px;font-weight:900;color:var(--accent)">8</div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy)">Operators</div>
+          <div style="font-size:12px;color:var(--text-muted)">Generate & manage certs</div>
+        </div>
+        <div class="glass-card" style="padding:18px;border-top:3px solid var(--emerald)">
+          <div style="font-size:24px;font-weight:900;color:var(--emerald)">12</div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy)">Viewers</div>
+          <div style="font-size:12px;color:var(--text-muted)">Read-only access</div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>User</th><th>Role</th><th>University</th><th>Last Login</th><th>Status</th><th>Permissions</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#f43f5e,#7c3aed)">SA</div><div><div style="font-weight:700;font-size:13px">Sr. Administrator</div><div style="font-size:11.5px;color:var(--text-muted)">admin@tmcs.or.tz</div></div></div></td><td><span class="badge role-admin">Admin</span></td><td>National Office</td><td style="font-size:12.5px">Today 10:32</td><td><span class="badge badge-green">Active</span></td><td style="font-size:12px;color:var(--text-muted)">All permissions</td><td><button class="btn btn-ghost btn-sm btn-icon">✏</button></td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#2563eb,#06b6d4)">JO</div><div><div style="font-weight:700;font-size:13px">John Operator</div><div style="font-size:11.5px;color:var(--text-muted)">j.operator@tmcs.or.tz</div></div></div></td><td><span class="badge role-operator">Operator</span></td><td>UDSM</td><td style="font-size:12.5px">Today 09:15</td><td><span class="badge badge-green">Active</span></td><td style="font-size:12px;color:var(--text-muted)">Members, Certs, Bulk</td><td><button class="btn btn-ghost btn-sm btn-icon">✏</button></td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#10b981,#0284c7)">MV</div><div><div style="font-weight:700;font-size:13px">Mary Viewer</div><div style="font-size:11.5px;color:var(--text-muted)">m.viewer@tmcs.or.tz</div></div></div></td><td><span class="badge role-viewer">Viewer</span></td><td>SUA</td><td style="font-size:12.5px">Yesterday</td><td><span class="badge badge-green">Active</span></td><td style="font-size:12px;color:var(--text-muted)">View only</td><td><button class="btn btn-ghost btn-sm btn-icon">✏</button></td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">TO</div><div><div style="font-weight:700;font-size:13px">Thomas Operator</div><div style="font-size:11.5px;color:var(--text-muted)">t.op@tmcs.or.tz</div></div></div></td><td><span class="badge role-operator">Operator</span></td><td>MUCE</td><td style="font-size:12.5px">Jun 1, 2025</td><td><span class="badge badge-gray">Inactive</span></td><td style="font-size:12px;color:var(--text-muted)">Members, Certs</td><td><button class="btn btn-ghost btn-sm btn-icon">✏</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ AUDIT LOGS ════ -->
+    <div class="page" id="page-audit">
+      <div class="breadcrumb"><a href="#">Home</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Audit Logs</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <div><div style="font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-0.5px">Audit Logs</div><div style="font-size:13px;color:var(--text-muted)">Complete trail of all system actions</div></div>
+        <button class="btn btn-secondary">Export CSV</button>
+      </div>
+
+      <div class="glass-card" style="padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <input style="flex:1;min-width:200px" placeholder="🔍  Filter by user, action or resource…">
+        <select style="width:150px"><option>All Actions</option><option>CREATE</option><option>UPDATE</option><option>DELETE</option><option>GENERATE</option><option>LOGIN</option></select>
+        <select style="width:140px"><option>All Users</option><option>Sr. Admin</option><option>John Operator</option></select>
+        <input type="date" style="width:140px" value="2025-06-01">
+      </div>
+
+      <div class="glass-card">
+        <div>
+          <div class="audit-item"><div class="audit-type-dot" style="background:var(--accent)"></div><div class="audit-body"><div class="audit-action"><strong>[GENERATE]</strong> Bulk cert generation — Job #J-1048 · 152 certs</div><div class="audit-meta">by <strong>John Operator</strong> · UDSM · Jun 2, 2025 10:18 AM · IP 197.186.x.x</div></div><span class="badge badge-blue">Generate</span></div>
+          <div class="audit-item"><div class="audit-type-dot" style="background:var(--emerald)"></div><div class="audit-body"><div class="audit-action"><strong>[UPDATE]</strong> Template layout updated — template_kamati_v2.pdf</div><div class="audit-meta">by <strong>Sr. Administrator</strong> · National Office · Jun 2, 2025 09:42 AM</div></div><span class="badge badge-green">Update</span></div>
+          <div class="audit-item"><div class="audit-type-dot" style="background:var(--gold)"></div><div class="audit-body"><div class="audit-action"><strong>[CREATE]</strong> 48 new member records imported from Excel — SUA</div><div class="audit-meta">by <strong>Mary Viewer</strong> · SUA · Jun 1, 2025 04:30 PM</div></div><span class="badge badge-gold">Create</span></div>
+          <div class="audit-item"><div class="audit-type-dot" style="background:var(--violet)"></div><div class="audit-body"><div class="audit-action"><strong>[LOGIN]</strong> User authenticated successfully</div><div class="audit-meta">by <strong>John Operator</strong> · Jun 1, 2025 09:15 AM · IP 197.186.x.x</div></div><span class="badge badge-violet">Auth</span></div>
+          <div class="audit-item"><div class="audit-type-dot" style="background:var(--rose)"></div><div class="audit-body"><div class="audit-action"><strong>[DELETE]</strong> Certificate revoked — TMCS-2024-000842 (duplicate)</div><div class="audit-meta">by <strong>Sr. Administrator</strong> · May 31, 2025 02:10 PM</div></div><span class="badge badge-rose">Delete</span></div>
+          <div class="audit-item"><div class="audit-type-dot" style="background:var(--emerald)"></div><div class="audit-body"><div class="audit-action"><strong>[CREATE]</strong> New signature uploaded — Bishop Representative (PNG)</div><div class="audit-meta">by <strong>Sr. Administrator</strong> · May 30, 2025 11:05 AM</div></div><span class="badge badge-green">Create</span></div>
+          <div class="audit-item"><div class="audit-type-dot" style="background:var(--accent)"></div><div class="audit-body"><div class="audit-action"><strong>[GENERATE]</strong> Single cert issued — TMCS-2025-001840 (Peter Kimani)</div><div class="audit-meta">by <strong>John Operator</strong> · May 29, 2025 03:22 PM</div></div><span class="badge badge-blue">Generate</span></div>
+        </div>
+        <div style="padding:14px 16px;border-top:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12.5px;color:var(--text-muted)">Showing 1–7 of 2,841 entries</span>
+          <div class="pagination"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">3</button><button class="page-btn">›</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ SETTINGS ════ -->
+    <div class="page" id="page-settings">
+      <div class="breadcrumb"><a href="#">Home</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">Settings</span></div>
+      <div style="font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-0.5px;margin-bottom:20px">System Settings</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="glass-card" style="padding:22px">
+            <div class="settings-title">Organization</div>
+            <div class="form-group" style="margin-bottom:12px"><label>Organization Name</label><input value="Tanzania Catholic Student Movement (TMCS)"></div>
+            <div class="form-group" style="margin-bottom:12px"><label>Abbreviation</label><input value="TMCS"></div>
+            <div class="form-group" style="margin-bottom:12px"><label>Verification Base URL</label><input value="https://verify.tmcs.or.tz/c/"></div>
+            <div class="form-group" style="margin-bottom:16px"><label>Contact Email</label><input value="certs@tmcs.or.tz" type="email"></div>
+            <button class="btn btn-primary">Save Changes</button>
+          </div>
+
+          <div class="glass-card" style="padding:22px">
+            <div class="settings-title">Certificate Numbering</div>
+            <div class="form-group" style="margin-bottom:12px"><label>Number Prefix</label><input value="TMCS-"></div>
+            <div class="form-group" style="margin-bottom:12px"><label>Year Format</label><select><option>YYYY (4-digit)</option><option>YY (2-digit)</option></select></div>
+            <div class="form-group" style="margin-bottom:16px"><label>Sequence Digits</label><input value="6" type="number"></div>
+            <div style="background:var(--gray-50);border-radius:8px;padding:12px;margin-bottom:16px;font-family:monospace;font-size:13px;font-weight:700;color:var(--navy)">Preview: TMCS-2025-001848</div>
+            <button class="btn btn-primary">Save Changes</button>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="glass-card" style="padding:22px">
+            <div class="settings-title">System Features</div>
+            <div class="settings-section">
+              <div class="settings-row"><div class="settings-row-info"><strong>QR Code on all Certificates</strong><span>Embed verification QR on every certificate</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+              <div class="settings-row"><div class="settings-row-info"><strong>Email on Certificate Issue</strong><span>Send PDF to member's email automatically</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+              <div class="settings-row"><div class="settings-row-info"><strong>Bulk Generation Queue</strong><span>Use async queue for bulk jobs (recommended)</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+              <div class="settings-row"><div class="settings-row-info"><strong>Expiry Alerts</strong><span>Notify admins 30 days before cert expiry</span></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+              <div class="settings-row"><div class="settings-row-info"><strong>Two-Factor Authentication</strong><span>Require 2FA for all admin accounts</span></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+              <div class="settings-row"><div class="settings-row-info"><strong>Cloud Storage Backup</strong><span>Auto-backup PDFs to cloud (S3/GCS)</span></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+            </div>
+          </div>
+
+          <div class="glass-card" style="padding:22px">
+            <div class="settings-title">PDF Generation Engine</div>
+            <div class="settings-row"><div class="settings-row-info"><strong>Engine</strong><span>PDF overlay renderer</span></div><span class="badge badge-blue">FPDI + FPDF</span></div>
+            <div class="settings-row"><div class="settings-row-info"><strong>Queue Driver</strong><span>Async processing backend</span></div><span class="badge badge-green">Redis + Laravel Queue</span></div>
+            <div class="settings-row"><div class="settings-row-info"><strong>Storage Driver</strong><span>Primary file storage</span></div><span class="badge badge-violet">Local + S3</span></div>
+            <div class="settings-row"><div class="settings-row-info"><strong>Max Bulk Job Size</strong><span>Per generation batch limit</span></div><span class="badge badge-gray">500 certs</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ─── FAB ─── -->
+<button class="fab" onclick="openModal('issueCertModal')">
+  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+  Issue Certificate
+</button>
+
+<!-- ════ MODALS ════ -->
+
+<!-- Add Member -->
+<div class="modal-overlay" id="addMemberModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Add New Member</div><button class="modal-close" onclick="closeModal('addMemberModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="gap:14px">
+        <div class="form-group"><label>Full Name *</label><input placeholder="e.g. Joseph Mwangi"></div>
+        <div class="form-group"><label>Student ID *</label><input placeholder="e.g. 2024/UDSM/0123"></div>
+        <div class="form-group"><label>Email</label><input type="email" placeholder="student@university.ac.tz"></div>
+        <div class="form-group"><label>Phone</label><input placeholder="+255 7xx xxx xxx"></div>
+        <div class="form-group"><label>University *</label><select><option value="">Select…</option><option>UDSM</option><option>SUA</option><option>MUCE</option><option>IFM</option><option>UDOM</option></select></div>
+        <div class="form-group"><label>Category</label><select><option>Student Member</option><option>Leadership</option><option>Alumni</option></select></div>
+        <div class="form-group"><label>Community Group</label><select><option>None</option><option>Charismatic Catholic</option><option>Legio Maria</option><option>Choir</option><option>Other</option></select></div>
+        <div class="form-group"><label>Join Date</label><input type="date"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('addMemberModal')">Cancel</button><button class="btn btn-primary">Add Member</button></div>
+  </div>
+</div>
+
+<!-- Issue Certificate -->
+<div class="modal-overlay" id="issueCertModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Issue Certificate</div><button class="modal-close" onclick="closeModal('issueCertModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="gap:14px">
+        <div class="form-group full"><label>Member *</label><input placeholder="Search member name or student ID…"></div>
+        <div class="form-group full"><label>Certificate Type *</label>
+          <select>
+            <option value="">Select certificate type…</option>
+            <option>🎓 Membership Certificate</option>
+            <option>👑 Kamati Tendaji Leadership</option>
+            <option>✝️ Community Group Leadership</option>
+            <option>🏛️ General Community Leadership</option>
+            <option>🕊️ Spiritual Coordinator</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Issue Date</label><input type="date"></div>
+        <div class="form-group"><label>Valid Until</label><input type="date"></div>
+        <div class="form-group full"><label>Role / Position on Certificate</label><input placeholder="e.g. Chairperson, Spiritual Coordinator, Member…"></div>
+        <div class="form-group full"><label>Notes (internal)</label><textarea placeholder="Internal notes — not printed on certificate…" style="height:70px"></textarea></div>
+      </div>
+      <div style="background:rgba(37,99,235,0.05);border:1px solid rgba(37,99,235,0.12);border-radius:10px;padding:12px;margin-top:12px;font-size:12.5px;color:var(--navy)">
+        ℹ️ A unique QR code and certificate number will be auto-generated. PDF will be available to download immediately after generation.
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('issueCertModal')">Cancel</button><button class="btn btn-primary">🎓 Generate Certificate</button></div>
+  </div>
+</div>
+
+<!-- Add Signature -->
+<div class="modal-overlay" id="addSigModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Upload Signature</div><button class="modal-close" onclick="closeModal('addSigModal')">×</button></div>
+    <div class="modal-body">
+      <div class="upload-zone" style="margin-bottom:16px">
+        <div class="upload-icon">✍️</div>
+        <div class="upload-title">Drop signature PNG here</div>
+        <div class="upload-sub">Transparent PNG recommended · max 2MB · ideal size 300×100px</div>
+        <button class="btn btn-primary" style="margin-top:12px">Browse File</button>
+      </div>
+      <div class="form-grid" style="gap:14px">
+        <div class="form-group"><label>Signatory Name *</label><input placeholder="e.g. Rev. Fr. Josephat Mwenda"></div>
+        <div class="form-group"><label>Official Title *</label><input placeholder="e.g. National Chaplain"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('addSigModal')">Cancel</button><button class="btn btn-primary">Upload Signature</button></div>
+  </div>
+</div>
+
+<!-- Add User -->
+<div class="modal-overlay" id="addUserModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Add System User</div><button class="modal-close" onclick="closeModal('addUserModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="gap:14px">
+        <div class="form-group"><label>Full Name *</label><input placeholder="Full name"></div>
+        <div class="form-group"><label>Email *</label><input type="email" placeholder="user@tmcs.or.tz"></div>
+        <div class="form-group"><label>Role *</label><select><option>Admin</option><option>Operator</option><option>Viewer</option></select></div>
+        <div class="form-group"><label>University / Branch</label><select><option>National Office</option><option>UDSM</option><option>SUA</option><option>MUCE</option></select></div>
+        <div class="form-group full"><label>Temporary Password</label><input type="password" placeholder="Will be required to change on first login"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('addUserModal')">Cancel</button><button class="btn btn-primary">Create User</button></div>
+  </div>
+</div>
+
+<!-- Bulk Import -->
+<div class="modal-overlay" id="bulkModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Quick Bulk Import</div><button class="modal-close" onclick="closeModal('bulkModal')">×</button></div>
+    <div class="modal-body">
+      <div class="upload-zone" style="margin-bottom:16px">
+        <div class="upload-icon">📊</div>
+        <div class="upload-title">Upload Member Excel File</div>
+        <div class="upload-sub">Required columns: Full Name, Student ID, University, Email, Category</div>
+        <button class="btn btn-primary" style="margin-top:12px">Choose File</button>
+      </div>
+      <div style="font-size:12.5px;color:var(--text-muted);display:flex;align-items:center;gap:6px"><span>📥</span><a href="#" style="color:var(--accent);font-weight:700">Download import template (.xlsx)</a></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('bulkModal')">Cancel</button><button class="btn btn-primary" onclick="closeModal('bulkModal');navigate('bulk',document.querySelector('[onclick*=bulk]'))">Go to Bulk Import →</button></div>
+  </div>
+</div>
+
+<script>
+  // ── Navigation ──
+  function navigate(page, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const target = document.getElementById('page-'+page);
+    if(target) target.classList.add('active');
+    if(el) el.classList.add('active');
+    const titles = {
+      dashboard:'Dashboard',members:'Member Registry',certificates:'Certificates',
+      templates:'PDF Templates',signatures:'Digital Signatures',bulk:'Bulk Import',
+      verification:'Certificate Verification',reports:'Reports & Analytics',
+      users:'Users & Roles',audit:'Audit Logs',settings:'Settings'
+    };
+    document.getElementById('headerTitle').textContent = titles[page] || page;
+    closeSidebar();
+  }
+
+  // ── Sidebar mobile ──
+  function toggleSidebar(){
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('show');
+  }
+  function closeSidebar(){
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+  }
+
+  // ── Modals ──
+  function openModal(id){ document.getElementById(id).classList.add('open'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+  document.querySelectorAll('.modal-overlay').forEach(o=>{
+    o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+  });
+
+  // ── Tabs ──
+  function setTab(el, tab){
+    el.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ── Bulk progress simulation ──
+  function showBulkProgress(){
+    let progress = 0;
+    const interval = setInterval(()=>{
+      progress = Math.min(progress + Math.random()*8 + 2, 100);
+      const num = Math.round(progress/100*152);
+      document.getElementById('bulkProgressNum').textContent = num;
+      document.getElementById('bulkProgressBar').style.width = progress+'%';
+      document.getElementById('bulkStatus').textContent = progress >= 100
+        ? '✅ All certificates generated!' : `Processing… ${Math.round(progress)}% complete`;
+      if(progress >= 100){
+        clearInterval(interval);
+        const btn = document.getElementById('downloadZipBtn');
+        btn.disabled = false;
+        btn.style.display = 'block';
+        btn.textContent = '⬇ Download ZIP (152 certs)';
+      }
+    }, 180);
+  }
+
+  // ── Verify ──
+  function verifyCertificate(){
+    const val = document.getElementById('certNumInput').value.trim();
+    const r = document.getElementById('verifyResult');
+    r.classList.add('show');
+    r.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  // ── Toggle buttons ──
+  document.querySelectorAll('.toggle').forEach(btn=>{
+    btn.addEventListener('click',()=>btn.classList.toggle('on'));
+  });
+
+  // ── ESC to close modal ──
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
+  });
+</script>
+</body>
+</html>
