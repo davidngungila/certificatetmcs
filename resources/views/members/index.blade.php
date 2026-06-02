@@ -26,6 +26,7 @@
         <div class="section-subtitle">{{ $members->total() }} total members</div>
     </div>
     <div style="display:flex; gap:8px">
+        <button class="btn btn-secondary" onclick="openModal('addCategoryModal')">🏷️ Add Category</button>
         <button class="btn btn-secondary" onclick="openModal('bulkImportModal')">📥 Bulk Import</button>
         <button class="btn btn-primary" onclick="openModal('addMemberModal')">👤 Add Member</button>
     </div>
@@ -47,10 +48,10 @@
                 <option value="{{ $u }}" {{ request('university') == $u ? 'selected' : '' }}>{{ $u }}</option>
                 @endforeach
             </select>
-            <select name="category" onchange="document.getElementById('filterForm').submit()" style="padding:8px 14px;border-radius:10px;border:1px solid var(--gray-200);font-family:inherit;background:#fff">
+            <select name="member_category_id" onchange="document.getElementById('filterForm').submit()" style="padding:8px 14px;border-radius:10px;border:1px solid var(--gray-200);font-family:inherit;background:#fff">
                 <option value="">All Categories</option>
                 @foreach($categories as $c)
-                <option value="{{ $c }}" {{ request('category') == $c ? 'selected' : '' }}>{{ $c }}</option>
+                <option value="{{ $c->id }}" {{ request('member_category_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                 @endforeach
             </select>
         </form>
@@ -80,7 +81,7 @@
                 <tr>
                     <td>
                         <div style="display:flex;align-items:center;gap:10px">
-                            <div class="avatar" style="background:linear-gradient(135deg, #2563eb, #8b5cf6)">
+                            <div class="avatar" style="background:{{ $member->category ? $member->category->color : 'linear-gradient(135deg, #2563eb, #8b5cf6)' }}">
                                 {{ strtoupper(substr($member->name, 0, 2)) }}
                             </div>
                             <div>
@@ -92,12 +93,11 @@
                     <td>{{ $member->student_id ?? '—' }}</td>
                     <td>{{ $member->university ?? '—' }}</td>
                     <td>
-                        <span class="badge
-                            @if($member->category == 'Student Member') badge-green
-                            @elseif($member->category == 'Leadership') badge-blue
-                            @elseif($member->category == 'Alumni') badge-violet
-                            @else badge-navy
-                            @endif">{{ $member->category }}</span>
+                        @if($member->category)
+                        <span class="badge badge-blue">{{ $member->category->name }}</span>
+                        @else
+                        <span class="badge badge-navy">Uncategorized</span>
+                        @endif
                     </td>
                     <td>{{ $member->joined_at ? $member->joined_at->format('M d, Y') : '—' }}</td>
                     <td style="text-align:right">
@@ -130,6 +130,39 @@
             <button class="page-btn" disabled>→</button>
             @endif
         </div>
+    </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal-overlay" id="addCategoryModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title">Add Member Category</div>
+            <button class="modal-close" onclick="closeModal('addCategoryModal')">×</button>
+        </div>
+        <form method="POST" action="{{ route('member-categories.store') }}">
+            @csrf
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label>Category Name</label>
+                        <input type="text" name="name" required placeholder="e.g., Student Member">
+                    </div>
+                    <div class="form-group">
+                        <label>Color</label>
+                        <input type="color" name="color" value="#2563eb">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" name="description" placeholder="Optional description">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addCategoryModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Category</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -167,9 +200,10 @@
                     </div>
                     <div class="form-group">
                         <label>Category</label>
-                        <select name="category" required>
+                        <select name="member_category_id">
+                            <option value="">Select...</option>
                             @foreach($categories as $c)
-                            <option value="{{ $c }}">{{ $c }}</option>
+                            <option value="{{ $c->id }}">{{ $c->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -199,7 +233,7 @@
             <div class="modal-body">
                 <p style="margin-bottom:16px; font-size:13px; color:var(--text-muted)">
                     Upload an Excel or CSV file with the following columns:
-                    <strong>Name, Email, Student ID, University, Category, Joined Date</strong>
+                    <strong>Name, Email, Student ID, University, Category ID, Joined Date</strong>
                 </p>
                 <div class="upload-zone" onclick="document.getElementById('bulkFileInput').click()">
                     <div class="upload-icon">📊</div>

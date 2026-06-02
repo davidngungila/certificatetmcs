@@ -13,11 +13,21 @@ class Member extends Model
         'email',
         'student_id',
         'university',
-        'category',
+        'member_category_id',
         'status',
         'joined_at'
     ];
     protected $casts = [
         'joined_at' => 'datetime'
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(MemberCategory::class, 'member_category_id');
+    }
+
+    public function certificates()
+    {
+        return $this->hasMany(Certificate::class);
+    }
 }

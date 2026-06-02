@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Member;
+use App\Models\MemberCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
@@ -11,10 +12,10 @@ class MemberController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Member::query();
+        $query = Member::query()->with('category');
         
-        if ($request->filled('category')) {
-            $query->where('category', $request->category);
+        if ($request->filled('member_category_id')) {
+            $query->where('member_category_id', $request->member_category_id);
         }
         
         if ($request->filled('university')) {
@@ -23,7 +24,7 @@ class MemberController extends Controller
         
         $members = $query->orderBy('created_at', 'desc')->paginate(10);
         
-        $categories = ['Student Member', 'Leadership', 'Alumni', 'Spiritual Coordinator'];
+        $categories = MemberCategory::all();
         $universities = ['UDSM', 'SUA', 'MUCE', 'IFM', 'UDOM', 'Other'];
         
         return view('members.index', compact('members', 'categories', 'universities'));
@@ -36,7 +37,7 @@ class MemberController extends Controller
             'email' => 'nullable|email|max:255|unique:members',
             'student_id' => 'nullable|string|max:50',
             'university' => 'nullable|string|max:100',
-            'category' => 'required|string|max:50',
+            'member_category_id' => 'nullable|exists:member_categories,id',
             'joined_at' => 'nullable|date'
         ]);
         
@@ -66,7 +67,7 @@ class MemberController extends Controller
                         'email' => $row[1] ?? null,
                         'student_id' => $row[2] ?? null,
                         'university' => $row[3] ?? null,
-                        'category' => $row[4] ?? 'Student Member',
+                        'member_category_id' => $row[4] ?? null,
                         'joined_at' => !empty($row[5]) ? $row[5] : now(),
                     ]);
                 }
