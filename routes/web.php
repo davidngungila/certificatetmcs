@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CertificateController;
+use App\Http\Controllers\MemberController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,9 +16,9 @@ Route::middleware('auth')->group(function () {
         return view('dashboard.index');
     })->name('dashboard');
 
-    Route::get('/members', function () {
-        return view('members.index');
-    })->name('members.index');
+    Route::get('/members', [MemberController::class, 'index'])->name('members.index');
+    Route::post('/members', [MemberController::class, 'store'])->name('members.store');
+    Route::post('/members/bulk-import', [MemberController::class, 'bulkImport'])->name('members.bulk-import');
 
     Route::get('/certificates', function () {
         return view('certificates.index');
