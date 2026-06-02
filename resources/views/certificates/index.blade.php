@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Certificates')
+@section('page-title', 'Certificates')
 
 @section('content')
 <div class="breadcrumb">
@@ -80,7 +80,7 @@
                     <td><span class="badge badge-green">Valid</span></td>
                     <td style="text-align:right">
                         <button class="btn btn-ghost btn-sm">View</button>
-                        <button class="btn btn-secondary btn-sm">Download</button>
+                        <button class="btn btn-secondary btn-sm" onclick="openGenPdfModal('Amina Juma', 'Leadership', '2025-01-15')">Download</button>
                     </td>
                 </tr>
                 <tr>
@@ -108,7 +108,7 @@
                     <td><span class="badge badge-rose">Revoked</span></td>
                     <td style="text-align:right">
                         <button class="btn btn-ghost btn-sm">View</button>
-                        <button class="btn btn-secondary btn-sm">Details</button>
+                        <button class="btn btn-secondary btn-sm" onclick="openGenPdfModal('John Nyerere', 'Membership', '2023-06-22')">Download</button>
                     </td>
                 </tr>
                 <tr>
@@ -136,7 +136,7 @@
                     <td><span class="badge badge-green">Valid</span></td>
                     <td style="text-align:right">
                         <button class="btn btn-ghost btn-sm">View</button>
-                        <button class="btn btn-secondary btn-sm">Download</button>
+                        <button class="btn btn-secondary btn-sm" onclick="openGenPdfModal('Sarah Mushi', 'Spiritual Coordinator', '2025-03-10')">Download</button>
                     </td>
                 </tr>
             </tbody>
@@ -156,3 +156,82 @@
     </div>
 </div>
 @endsection
+
+<!-- Issue Certificate Modal -->
+<div class="modal-overlay" id="issueCertModal">
+    <div class="modal">
+        <div class="modal-header"><div class="modal-title">Issue Certificate</div><button class="modal-close" onclick="closeModal('issueCertModal')">×</button></div>
+        <div class="modal-body">
+            <form id="certForm" method="POST" action="{{ route('certificates.generate-pdf') }}">
+                @csrf
+                <div class="form-grid" style="gap:14px">
+                    <div class="form-group full">
+                        <label>Member Name</label>
+                        <input type="text" name="name" placeholder="e.g., Amina Juma" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Certificate Type</label>
+                        <select name="type" required>
+                            <option>Membership</option>
+                            <option>Leadership</option>
+                            <option>Spiritual Coordinator</option>
+                            <option>Community Group Lead</option>
+                            <option>Achievement Award</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Issue Date</label>
+                        <input type="date" name="date" value="{{ date('Y-m-d') }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding:24px 0 0 0; justify-content:flex-end">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('issueCertModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Generate PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Generate Existing Certificate PDF -->
+<div class="modal-overlay" id="genPdfModal">
+    <div class="modal">
+        <div class="modal-header"><div class="modal-title">Download Certificate</div><button class="modal-close" onclick="closeModal('genPdfModal')">×</button></div>
+        <div class="modal-body">
+            <form id="genPdfForm" method="POST" action="{{ route('certificates.generate-pdf') }}">
+                @csrf
+                <div class="form-grid" style="gap:14px">
+                    <div class="form-group full">
+                        <label>Member Name</label>
+                        <input type="text" id="genCertName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Certificate Type</label>
+                        <select id="genCertType" name="type" required>
+                            <option>Membership</option>
+                            <option>Leadership</option>
+                            <option>Spiritual Coordinator</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Issue Date</label>
+                        <input type="date" id="genCertDate" name="date" required>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding:24px 0 0 0; justify-content:flex-end">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('genPdfModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Download PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openGenPdfModal(name, type, date) {
+        document.getElementById('genCertName').value = name;
+        document.getElementById('genCertType').value = type;
+        document.getElementById('genCertDate').value = date;
+        openModal('genPdfModal');
+    }
+</script>

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Certificate Verification')
+@section('page-title', 'Certificate Verification')
 
 @section('content')
 <div class="breadcrumb">

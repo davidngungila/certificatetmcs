@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Bulk Import')
+@section('page-title', 'Bulk Import')
 
 @section('content')
 <div class="breadcrumb">

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Audit Logs')
+@section('page-title', 'Audit Logs')
 
 @section('content')
 <div class="breadcrumb">

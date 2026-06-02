@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Digital Signatures')
+@section('page-title', 'Digital Signatures')
 
 @section('content')
 <div class="breadcrumb">

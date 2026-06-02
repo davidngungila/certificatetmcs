@@ -712,7 +712,7 @@
 
   <nav class="sidebar-nav">
     <div class="nav-section">
-      <div class="nav-section-label">Overview</div>
+      
       <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke-width="2"/></svg>
         Dashboard
@@ -720,7 +720,7 @@
     </div>
 
     <div class="nav-section">
-      <div class="nav-section-label">Management</div>
+     
       <a href="{{ route('members.index') }}" class="nav-item {{ request()->routeIs('members.index') ? 'active' : '' }}">
         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 0 0-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 0 15.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 19.288 0"/></svg>
         Members
@@ -742,7 +742,7 @@
     </div>
 
     <div class="nav-section">
-      <div class="nav-section-label">Operations</div>
+     
       <a href="{{ route('bulk.index') }}" class="nav-item {{ request()->routeIs('bulk.index') ? 'active' : '' }}">
         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 0 03 3h10a3 3 0 0 03-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
         Bulk Import
@@ -759,7 +759,7 @@
     </div>
 
     <div class="nav-section">
-      <div class="nav-section-label">System</div>
+      
       <a href="{{ route('users.index') }}" class="nav-item {{ request()->routeIs('users.index') ? 'active' : '' }}">
         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 1 10 5.292M15 21H3v-1a6 6 0 0 112 0v1zm0 0h6v-1a6 6 0 0 0-9-5.197M13 7a4 4 0 1 1-8 0 4 4 0 0 18 0z"/></svg>
         Users & Roles

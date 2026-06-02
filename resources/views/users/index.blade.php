@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Users & Roles')
+@section('page-title', 'Users & Roles')
 
 @section('content')
 <div class="breadcrumb">
